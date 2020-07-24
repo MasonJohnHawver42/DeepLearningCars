@@ -7,6 +7,12 @@ import math
 import timeit
 pygame.init()
 
+# The math, game engine, neural net code, and genetic algorithim are all encapsulated here!
+# I know one continus file with no documentaion is awsome, so have fun exploring!
+
+# But Seriusly if you are interested in how it all works start at the bottom and work your way up, because if you think about it code is like a pyramid and the base of it is here at the top
+# or just contact me (mason.hawver@gmail.com) also this is based upon my c++ basic game engine
+
 class Vector:
     def __init__(self, x = 0, y = 0):
         self.x = x
