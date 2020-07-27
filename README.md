@@ -13,20 +13,20 @@ wiki page - https://en.wikipedia.org/wiki/Genetic_algorithm
 
 # Where the Deep comes in
 I use a feed forward neural network to determine the steering angle, breaking force, and engine force of the car.
-The inputs to this network is distances from rays cast out of the car at varius angles ( this was the exact set of anles - [-45, -22, -11, 0, 11, 22, 45] );
+The inputs to this network is distances from rays cast out of the car at varius angles ( this was the exact set of anles - [-40, -20, 0, 20, 40 ] );
 However, I found out that the networks can learn extremly well with any set of angles!
 
 # The NN model
 
-input layer - 7 units ( distances of rays as I mentioned earlier - [-45, -22, -11, 0, 11, 22, 45] )
+input layer - 5 units ( distances of rays as I mentioned earlier - [-40, -20, 0, 20, 40 ] )
 
-dense layer - 7 units in, 6 units out, relu activation
+dense layer - 5 units in, 4 units out, relu activation -> f(x) = min(max(0, x), 100)
 
-dense layer - 6 units in, 4 units out, relu activation
+dense layer - 4 units in, 3 units out, relu activation -> f(x) = min(max(0, x), 100)
 
-dense layer - 4 units in, 2 units out, tanh activation ( tanh outputs between -1 and 1, so one output is the steering amt and the positive of the other is the amt of engine force and the negetive of the second output is the breaking force )
+dense layer - 3 units in, 2 units out, tanh activation -> f(x) =  ( 2.0 / ( 1 + (e ^ (-2 * x / 10.0) ) ) ) - 1
 
-Again, when playing around with weird input and ouput sizes of the dense layers the cars still leqarned to drive just fine!
+I used modified activation functions because it worked better with the input ( this became imparent when rendering a repersentation of the most fit car to the screen; the nodes were bassically binary, so I adjusted range of values the activation function would accept inorder to learn more of the input space. )
 
 # All of it Together
 Each car is given its own copy of the model.
@@ -40,7 +40,7 @@ numpy, scipy, pygame
 <code> pip3 install numpy, scipy, pygame </code>
 # Run
 <code> 
-cd [dir of Auto.py]
+cd [ dir of DeepLearningCars.py and barcade-brawl.tff (<-its the font I used) ]
 
-python3 Auto.py
+python3 DeepLearningCars.py
 </code>
