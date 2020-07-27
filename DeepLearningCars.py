@@ -550,7 +550,9 @@ class Car(PhysicsEntity):
         #self.vel = heading2
 
     def turn(self, dir):
-        self.steering_angle = dir * self.max_steering_angle
+        new_sa = dir * self.max_steering_angle
+        diff = new_sa - self.steering_angle
+        self.steering_angle += (diff * self.world.dt * 10)
         self.rotate()
 
     def input(self):
@@ -698,10 +700,10 @@ class RaceCar(Car):
 import numpy as np
 
 def relu(val):
-    return max(0, val)
+    return min(max(0, val), 100)
 
 def tanh(val):
-    return ( 2.0 / ( 1 + math.pow(math.e, -2 * val) ) ) - 1
+    return ( 2.0 / ( 1 + math.pow(math.e, -2 * val / 10.0) ) ) - 1
 
 
 class Dense:
@@ -802,10 +804,11 @@ class AutoBrain:
                 conns = []
 
                 for j, val in enumerate(layer.output):
-                    if i in [0, 1]:
-                        activation = max(min( ( (val) / 10.0 ), 1), 0)
+                    if i < 2:
+                        activation = max(min( ( (val ) / 100.0 ), 1), 0)
                     else:
-                        activation = max(min( ( (val + 1) / 2 ), 1), 0)
+                        activation = max(min( ( (val + 1) / 2.0 ), 1), 0)
+
                     color = int(activation * 255)
 
                     unit = Circle(size, pos, (color, color, color))
@@ -845,6 +848,8 @@ class Auto(RaceCar):
 
         self.fitness = 0
 
+        self.inputs = []
+
         self.gen = world.generation
 
         self.parent = parent
@@ -874,9 +879,10 @@ class Auto(RaceCar):
         self.fitness += 1
 
     def getInputs(self):
-        max_dis = 1000000
+        max_dis = 400
 
         angles = [-40, -20, 0, 20, 40]
+        self.inputs = []
         inputs = []
 
         for angle in angles:
@@ -915,8 +921,8 @@ class Auto(RaceCar):
                 col = end
 
             if self.top or 0:
-                pass
-                #self.world.viewer.draw([Circle(5, col)])#, Line(start, col, (255, 255, 255))])
+                self.inputs.append(Circle(5, col))
+                #self.inputs.append(Line(start, col, (255, 255, 255)))
 
             dis = start.getDis(col)
             inputs.append(dis)
@@ -1099,7 +1105,7 @@ class AutoSimulation:
         self.events = []
         self.dt = 0
 
-        self.addNewAutos(60)
+        self.addNewAutos(40)
 
     def generateTrack(self, difficulty):
         size = random.randint(int(800 - (400 * difficulty)), 800)
@@ -1203,6 +1209,7 @@ class AutoSimulation:
         self.text.draw(self.viewer.display)
 
         self.top_auto.brain.draw(Rect((200, 150), (self.viewer.pos.x + 50, self.viewer.pos.y + 50)))
+        self.viewer.draw(self.top_auto.inputs)
         self.viewer.render()
         self.viewer.clear()
 
