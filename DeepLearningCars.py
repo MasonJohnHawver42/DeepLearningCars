@@ -1,117 +1,127 @@
-from scipy.spatial import ConvexHull
-from pygame.locals import *
-import numpy as np
-import random
-import pygame
 import math
+import os
 import timeit
+from random import randint
+
+import numpy as np
+import pygame
+from pygame.locals import *
+from scipy.spatial import ConvexHull
+
+# import dis
+
+os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (20, 30)
 pygame.init()
 
-# The math, game engine, neural net code, and genetic algorithim are all encapsulated here!
-# I know one continus file with no documentaion is awsome, so have fun exploring!
+reset_timer = 30000  # reset the track after n ms
+num_car = 200  # how many car to spawn
 
-# But Seriusly if you are interested in how it all works start at the bottom and work your way up, because if you think about it code is like a pyramid and the base of it is here at the top
-# or just contact me (mason.hawver@gmail.com) also this is based upon my c++ basic game engine
+
+# The math, game engine, neural net code, and genetic algorithms are all encapsulated here!
+# I know one continuous file with no documentation is awesome, so have fun exploring!
+
+# But Seriously if you are interested in how it all works start at the bottom and work your way up,
+# because if you think about it code is like a pyramid and the base of it is here at the top
+# or just contact me (mason.hawver@gmail.com) also the game engine is based upon my c++ basic game engine to an extent
+
 
 class Vector:
-    def __init__(self, x = 0, y = 0):
+    """a basic vector class"""
+
+    def __init__(self, x=0, y=0) -> None:
         self.x = x
         self.y = y
 
     def __iter__(self):
         return self
 
-    def __getitem__(self, key):
-        key = key % 2
-
-        if key == 0:
+    def __getitem__(self, key: int) -> int or float:
+        if key % 2 == 0:
             return self.x
-        if key == 1:
-            return self.y
+        return self.y
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """Always return 2"""
         return 2
 
-    def set(self, iterable):
+    def set(self, iterable) -> None:
         self.x = iterable[0]
         self.y = iterable[1]
 
-    def add(self, vec):
+    def add(self, vec) -> None:
         self.x += vec[0]
         self.y += vec[1]
 
-    def sub(self, vec):
+    def sub(self, vec) -> None:
         self.x -= vec[0]
         self.y -= vec[1]
 
-    def mult(self, vec):
+    def mult(self, vec) -> None:
         self.x *= vec[0]
         self.y *= vec[1]
 
-    def div(self, vec):
+    def div(self, vec) -> None:
         try:
             self.x /= vec[0]
             self.y /= vec[1]
-        except:
+        except ZeroDivisionError:
             print("No div by 0")
 
-    def flip(self): # forgot the real name for this NOOOO
+    def flip(self) -> None:  # forgot the real name for this...
         self.x = 1. / self.x
         self.y = 1. / self.y
 
-    def getDis(self, vec):
-        dis = Vector(); dis.set(self)
+    def getDis(self, vec) -> int or float:
+        dis = Vector()
+        dis.set(self)
         dis.sub(vec)
-
         return dis.getMag()
 
-    def normalize(self):
+    def normalize(self) -> None:
         self.setMag(1)
 
-    def getMag(self):
-        m = math.sqrt(pow(self.x, 2) + pow(self.y, 2))
-        return m
+    def getMag(self) -> float:
+        return math.sqrt(pow(self.x, 2) + pow(self.y, 2))
 
-    def setMag(self, mag):
+    def setMag(self, mag) -> None:
         mag = mag / self.getMag()
         self.mult(Vector(mag, mag))
 
-    def limitMag(self, max_mag):
+    def limitMag(self, max_mag) -> None:
         mag = self.getMag()
         if mag > max_mag:
             mag *= max_mag
             self.div((mag, mag))
 
-    def dot(self, vec):
+    def dot(self, vec) -> int or float:
         return (self.x * vec.x) + (vec.y * self.y)
 
-    def getProjection(self, vec):
+    def getProjection(self, vec: 'Vector'):
         """ projects vec onto self """
         p = self.dot(vec) / (self.getMag() ** 2)
         proj = Vector(self.x, self.y)
         proj.mult((p, p))
-
         return proj
 
-    def getRecipercol(self):
+    def getReciprocal(self):
         """ rot 90 """
         return Vector(self.y, -1 * self.x)
 
-    def rotate(self, a, c = (0, 0), degree = 0):
+    def rotate(self, a, c=(0, 0), degree=0):
         self.sub(c)
-        a = a / ( 180.0 / math.pi ) if degree else a
-        x = ( self.x * math.cos(a) ) - ( self.y * math.sin(a) )
-        y = ( self.x * math.sin(a) ) + ( self.y * math.cos(a) )
+        a = a / (180.0 / math.pi) if degree else a
+        x = (self.x * math.cos(a)) - (self.y * math.sin(a))
+        y = (self.x * math.sin(a)) + (self.y * math.cos(a))
         self.set((x, y))
         self.add(c)
 
     def getAngleDiff(self, vec):
         val = self.dot(vec) / (self.getMag() * vec.getMag())
         val = max(min(val, 1), -1)
-        angle = math.acos(val) # in radians
+        angle = math.acos(val)  # in radians
         return angle
 
-    def scale(self, scale, c = (0, 0)):
+    def scale(self, scale, c=(0, 0)):
         self.sub(c)
         self.mult(scale)
         self.add(c)
@@ -119,8 +129,9 @@ class Vector:
     def __repr__(self):
         return "Vec = [x: {}, y: {}]".format(self.x, self.y)
 
+
 class Line:
-    def __init__(self, s = (0, 0), e = (1, 1), color = (255, 0, 0), width = 1):
+    def __init__(self, s=(0, 0), e=(1, 1), color=(255, 0, 0), width=1):
         self.start = Vector()
         self.start.set(s)
         self.end = Vector()
@@ -130,19 +141,23 @@ class Line:
         self.color = color
 
     def getSlope(self):
-        d = (self.start.x - self.end.x)
-        if not d == 0:
-            return (self.start.y - self.end.y) / d
-        return None
+        try:
+            return (self.start.y - self.end.y) / (self.start.x - self.end.x)
+        except ZeroDivisionError:
+            return None
 
     def getIntercept(self):
-        m = self.getSlope()
-        if not m == None:
-            return self.start.y - (m * self.start.x)
-        return None
+        # m = self.getSlope()
+        # if m is not None:
+        #    return self.start.y - (m * self.start.x)
+        # return None
+        try:
+            return self.start.y - (((self.start.y - self.end.y) / (self.start.x - self.end.x)) * self.start.x)
+        except ZeroDivisionError:
+            return None
 
     def inDomain(self, x):
-        return min(self.start.x, self.end.x) < x and x < max(self.start.x, self.end.x)
+        return min(self.start.x, self.end.x) < x < max(self.start.x, self.end.x)
 
     def getLineIntercept(self, line):
         m1 = self.getSlope()
@@ -150,19 +165,20 @@ class Line:
         m2 = line.getSlope()
         b2 = line.getIntercept()
 
-        if not None in [m1, b1, m2, b2] and not m1 - m2 == 0:
-            #print("here")
-
+        try:
             xi = (b2 - b1) / (m1 - m2)
-
-            if self.inDomain(xi) and line.inDomain(xi):
-                yi = (m1 * xi) + b1
-                return Vector(xi, yi)
-
-        return None
+        except (ZeroDivisionError, TypeError) as e:
+            print("Exception in GetLineIntercept : %s", e)
+            return None
+        if self.inDomain(xi) and line.inDomain(xi):
+            yi = (m1 * xi) + b1
+            return Vector(xi, yi)
+        else:
+            return None
 
     def getCenter(self):
-        c = Vector(); c.set(self.start)
+        c = Vector()
+        c.set(self.start)
         c.add(self.end)
         c.div((2, 2))
 
@@ -178,11 +194,12 @@ class Line:
 
     def draw(self, display):
         pygame.draw.line(display, self.color,
-                        [int(self.start.x), int(self.start.y)],
-                        [int(self.end.x), int(self.end.y)], self.width)
+                         [int(self.start.x), int(self.start.y)],
+                         [int(self.end.x), int(self.end.y)], self.width * 2 + 1)
+
 
 class Rect:
-    def __init__(self, size = (7.5, 15), pos = (0, 0)):
+    def __init__(self, size=(7.5, 15), pos=(0, 0)):
         self.size = Vector()
         self.size.set(size)
         self.pos = Vector()
@@ -201,22 +218,27 @@ class Rect:
     def scale(self, scale):
         self.size.mult(scale)
 
+
 class Poly:
-    def __init__(self, points = [[-1, -1], [1, -1], [1, 1], [-1, 1]], c = (0, 0)):
+    def __init__(self, points=None, c=(0, 0)):
+        if points is None:
+            points = [[-1, -1], [1, -1], [1, 1], [-1, 1]]
+
         self.points = []
         for point in points:
             p = Vector()
             p.set(point)
             self.points.append(p)
-        self.pos = Vector(); self.pos.set(c)
+        self.pos = Vector()
+        self.pos.set(c)
 
         self.color = (0, 0, 0)
 
     def setByRect(self, rect):
         pattern = [[-.5, .5],
-                  [.5, .5],
-                  [.5, -.5],
-                  [-.5, -.5]]
+                   [.5, .5],
+                   [.5, -.5],
+                   [-.5, -.5]]
 
         self.points = []
 
@@ -236,25 +258,27 @@ class Poly:
         left = None
 
         for point in self.points:
-            p = Vector(); p.set(point)
+            p = Vector()
+            p.set(point)
             p.add(self.pos)
 
-            if top == None or p.y > top:
+            if top is None or p.y > top:
                 top = p.y
 
-            if bottom == None or p.y < bottom:
+            if bottom is None or p.y < bottom:
                 bottom = p.y
 
-            if right == None or p.x > right:
-                rigth = p.x
+            if right is None or p.x > right:
+                right = p.x
 
-            if left == None or p.x < left:
+            if left is None or p.x < left:
                 left = p.x
 
-        return Rect(size = (rigth - left, top - bottom), pos = (left, top))
+        return Rect(size=(right - left, top - bottom), pos=(left, top))
 
-    def getMidPoint(self, i1 = 0, i2 = 1):
-        mid = Vector(); mid.set(self.points[i1])
+    def getMidPoint(self, i1=0, i2=1):
+        mid = Vector()
+        mid.set(self.points[i1])
         mid.add(self.points[i2])
         mid.div((2, 2))
 
@@ -282,7 +306,7 @@ class Poly:
 
 
 class Circle:
-    def __init__(self, radius = 1, pos = (0, 0), c = (0, 0, 0)):
+    def __init__(self, radius=1, pos=(0, 0), c=(0, 0, 0)):
         self.radius = radius
         self.pos = Vector()
         self.pos.set(pos)
@@ -299,12 +323,13 @@ class Circle:
     def draw(self, display):
         pygame.draw.circle(display, self.color, (int(self.pos.x), int(self.pos.y)), int(self.radius))
 
+
 class Text:
     def __init__(self, message):
         self.font = pygame.font.Font('barcade-brawl.ttf', 16)
         self.text = self.font.render(message, False, (0, 0, 0))
         self.textRect = self.text.get_rect()
-        self.textRect.center = (1150 - (self.textRect.size[0] / 2.0), 100 - (self.textRect.size[1] / 2.0))
+        self.textRect.center = (955 - (self.textRect.size[0] / 2.0), 100 - (self.textRect.size[1] / 2.0))
 
     def scale(self, s):
         pass
@@ -315,8 +340,10 @@ class Text:
     def draw(self, display):
         display.blit(self.text, self.textRect)
 
+
 class Viewer:
-    def __init__(self, world, display = pygame.display.set_mode((800, 400)), size = (20, 10), pos = (-5, -5)):
+    def __init__(self, world, display=pygame.display.set_mode((800, 400), SCALED), size=(20, 10), pos=(-5, -5)):
+        display.set_alpha(None)
         self.world = world
         self.display = display
         self.size = Vector()
@@ -325,18 +352,20 @@ class Viewer:
         self.pos.set(pos)
 
     def zoom(self, amt):
-        old = Vector(); old.set(self.size)
+        old = Vector()
+        old.set(self.size)
         self.size.mult((amt, amt))
         old.sub(self.size)
         old.div((2, 2))
         self.pos.add(old)
 
-    def clear(self, color = (0, 0, 0)):
-        self.display.fill((100, 180, 110))
+    def clear(self, color=(100, 180, 110)):
+        self.display.fill(color)
 
     def draw(self, shapes):
         shift = Vector(self.pos.x, self.pos.y)
-        scale = Vector(); scale.set(self.display.get_size())
+        scale = Vector()
+        scale.set(self.display.get_size())
         scale.div(self.size)
 
         for shape in shapes:
@@ -348,37 +377,40 @@ class Viewer:
         scale.flip()
 
         for shape in shapes:
-
             shape.scale(scale)
             shape.shift(shift)
 
-    def render(self):
+    @staticmethod
+    def render():
         pygame.display.flip()
 
+
 class TargetViewer(Viewer):
-    def __init__(self, world, target = (0, 0), display = pygame.display.set_mode((1200, 1200)), size = (800, 800), pos = (-400, -400)):
+    def __init__(self, world, target=(0, 0), display=pygame.display.set_mode((1000, 1000)), size=(800, 800),
+                 pos=(-400, -400)):
         Viewer.__init__(self, world, display, size, pos)
         self.target = Vector()
         self.target.set(target)
 
         self.speed = 10
 
-    def updatePos(self, target = None):
-        if not target == None:
+    def updatePos(self, target=None):
+        if target is not None and not (pygame.mouse.get_pressed(3)[0]):
             self.target.mult((0, 0))
             self.target.sub(self.size)
             self.target.div((2, 2))
             self.target.add(target)
 
-
-            vel = Vector(); vel.set(self.target)
+            vel = Vector()
+            vel.set(self.target)
             vel.sub(self.pos)
 
-            #vel.limitMag(self.speed)
+            # vel.limitMag(self.speed)
             vel.mult((self.world.dt, self.world.dt))
             vel.mult((self.speed, self.speed))
 
             self.pos.add(vel)
+
 
 class Mouse:
     def __init__(self, world):
@@ -387,10 +419,12 @@ class Mouse:
 
         self.delta = Vector()
 
-        pygame.mouse.set_visible(0)
+        pygame.mouse.set_visible(True)
 
+    @staticmethod
     def getScreenPos():
-        pos = Vector(); pos.set(pygame.mouse.get_pos())
+        pos = Vector()
+        pos.set(pygame.mouse.get_pos())
         return pos
 
     def updatePos(self):
@@ -406,7 +440,7 @@ class Mouse:
     def update(self):
         self.updatePos()
 
-        if (pygame.mouse.get_pressed()[0]):
+        if pygame.mouse.get_pressed(3)[0]:
             self.world.viewer.pos.sub(self.delta)
             self.body.pos.sub(self.delta)
 
@@ -419,37 +453,41 @@ class Mouse:
                 elif event.button == 5:
                     self.world.viewer.zoom(1 - amt)
 
-
     def draw(self):
-        pygame.draw.circle(self.world.viewer.display, (0, 0, 0), Mouse.getScreenPos(), self.body.radius)
-
+        # pygame.draw.circle(self.world.viewer.display, (0, 0, 0), Mouse.getScreenPos(), self.body.radius)
+        pass
 
 
 class PhysicsEntity:
-    def __init__(self, world, pos = (0, 0), vel = (0, 0), acc = (0, 0)):
+    def __init__(self, world, pos=(0, 0), vel=(0, 0), acc=(0, 0)):
         self.world = world
-        self.pos = Vector(); self.pos.set(pos)
-        self.vel = Vector(); self.vel.set(vel)
-        self.acc = Vector(); self.acc.set(acc)
+        self.pos = Vector()
+        self.pos.set(pos)
+        self.vel = Vector()
+        self.vel.set(vel)
+        self.acc = Vector()
+        self.acc.set(acc)
 
         self.mass = 150
 
-    def applyForce(self, f = (0, 0)):
+    def applyForce(self, f=(0, 0)):
         self.acc.add((f[0] / self.mass, f[1] / self.mass))
 
-    def applyFriction(self, f = .1):
+    def applyFriction(self, f=.1):
         f = 1 - f
         f = pow(f, self.world.dt)
         self.vel.mult((f, f))
 
     def applyVel(self):
-        v = Vector(); v.set(self.vel)
+        v = Vector()
+        v.set(self.vel)
         v.mult((self.world.dt, self.world.dt))
 
         self.pos.add(v)
 
     def applyAcc(self):
-        a = Vector(); a.set(self.acc)
+        a = Vector()
+        a.set(self.acc)
         a.mult((self.world.dt, self.world.dt))
 
         self.vel.add(a)
@@ -458,7 +496,6 @@ class PhysicsEntity:
     def update(self):
         self.applyAcc()
         self.applyVel()
-
 
 
 class Car(PhysicsEntity):
@@ -470,12 +507,15 @@ class Car(PhysicsEntity):
         self.steering_angle = 0
         self.max_steering_angle = math.pi / 6
 
-        self.c_drag = .4257 # drag coef
-        self.c_rr = 12.8 # rolling resistance coef
-        self.c_tf = 12 # tyre friction coef
+        # self.c_drag = .4257  # drag coef
+        # self.c_rr = 12.8  # rolling resistance coef
+        # self.c_tf = 12  # tyre friction coef
+        self.c_drag = .4257  # drag coef
+        self.c_rr = 12.8  # rolling resistance coef
+        self.c_tf = 8  # tyre friction coef
 
-        self.breakingForce = 100000
-        self.engineForce = 350000
+        self.breakingForce = 200000  # KERU original is 100000
+        self.engineForce = 700000  # KERU : original is 350000
 
         self.accelerating = 0
         self.breaking = 0
@@ -485,44 +525,45 @@ class Car(PhysicsEntity):
         self.body.pos = self.pos
 
     def updateFriction(self):
-        """ applys drag, rolling resistance, and lateral friction"""
+        """ apply drag, rolling resistance, and lateral friction"""
         if abs(self.vel.x) > .01 and abs(self.vel.y) > .01:
-            """ applys the drag force """
-            drag = Vector(); drag.set(self.vel)
+            """ apply the drag force """
+            drag = Vector()
+            drag.set(self.vel)
             d = self.c_drag * self.vel.getMag() * -1
             drag.mult((d, d))
 
             self.applyForce(drag)
 
-            """ applys the rolling resistance force """
-            rr = Vector(); rr.set(self.vel)
+            """ apply the rolling resistance force """
+            rr = Vector()
+            rr.set(self.vel)
             rr.mult((self.c_rr, self.c_rr))
             rr.mult((-1, -1))
 
             self.applyForce(rr)
 
-        """ applys lateral frictrion"""
-        #ms = 250
-        #self.c_tf = max(3, (((15 - 5) / (100 - ms)) * (self.vel.getMag() - ms)) + 3)
+        """ apply lateral friction"""
+        # ms = 250
+        # self.c_tf = max(3, (((15 - 5) / (100 - ms)) * (self.vel.getMag() - ms)) + 3)
 
-        l = -1 * self.c_tf * self.mass
-        lateral = self.body.getMidPoint().getRecipercol()
+        line = -1 * self.c_tf * self.mass
+        lateral = self.body.getMidPoint().getReciprocal()
         lat_vel = lateral.getProjection(self.vel)
-        lat_vel.mult((l, l))
+        lat_vel.mult((line, line))
 
         self.applyForce(lat_vel)
 
-
-    def applyBreakingForce(self, amt = 1):
-        """ applys the breaking force """
+    def applyBreakingForce(self, amt=1):
+        """ apply the breaking force """
         if not (self.vel.x == 0 and self.vel.y == 0) and (not amt == 0):
             br = self.body.getMidPoint()
             br.setMag(self.breakingForce * -amt)
 
             self.applyForce(br)
 
-    def applyEngineForce(self, amt = 1):
-        """ applys the traction froce """
+    def applyEngineForce(self, amt=1):
+        """ apply the traction force """
         forward = self.body.getMidPoint()
         forward.setMag(self.engineForce * amt)
 
@@ -530,15 +571,18 @@ class Car(PhysicsEntity):
 
     def rotate(self):
         front = self.body.getMidPoint()
-        end = Vector(); end.set(front)
+        end = Vector()
+        end.set(front)
         end.mult((-1, -1))
 
         heading = Vector()
         heading.add(front)
         heading.sub(end)
 
-        heading2 = Vector(); heading2.set(heading)
-        v = Vector(); v.set(self.vel)
+        heading2 = Vector()
+        heading2.set(heading)
+        v = Vector()
+        v.set(self.vel)
         v.mult((self.world.dt, self.world.dt))
         heading2.sub(v)
         v.rotate(self.steering_angle)
@@ -547,10 +591,10 @@ class Car(PhysicsEntity):
         self.body.rotate(heading.getAngleDiff(heading2) * d)
 
         heading2.setMag(self.vel.getMag())
-        #self.vel = heading2
+        # self.vel = heading2
 
-    def turn(self, dir):
-        new_sa = dir * self.max_steering_angle
+    def turn(self, direction):
+        new_sa = direction * self.max_steering_angle
         diff = new_sa - self.steering_angle
         self.steering_angle += (diff * self.world.dt * 10)
         self.rotate()
@@ -583,7 +627,6 @@ class Car(PhysicsEntity):
                 if event.key == pygame.K_LEFT:
                     self.turning = 0
 
-
         if self.accelerating:
             self.applyEngineForce()
 
@@ -591,8 +634,8 @@ class Car(PhysicsEntity):
             self.applyBreakingForce()
 
         if abs(self.turning):
-            self.steering_angle = self.max_steering_angle * self.turning #* self.world.dt
-            #self.steering_angle = min(abs(self.steering_angle), self.max_steering_angle) * self.turning
+            self.steering_angle = self.max_steering_angle * self.turning  # * self.world.dt
+            # self.steering_angle = min(abs(self.steering_angle), self.max_steering_angle) * self.turning
             self.rotate()
         else:
             self.steering_angle = 0
@@ -602,9 +645,9 @@ class Car(PhysicsEntity):
                  Line(self.body.points[1], self.body.points[2]),
                  Line(self.body.points[0], self.body.points[1])]
 
-        for l in lines:
-            l.shift((self.body.pos.x * -1, self.body.pos.y * -1))
-            if not l.getLineIntercept(line) == None:
+        for _line in lines:
+            _line.shift((self.body.pos.x * -1, self.body.pos.y * -1))
+            if _line.getLineIntercept(line) is not None:
                 return 1
 
         return 0
@@ -620,64 +663,64 @@ class Car(PhysicsEntity):
 
         end = self.body.getMidPoint()
         end.add(self.body.pos)
-        start = Vector(); start.set(self.body.pos)
-        l = Line(start, end)
+        start = Vector()
+        start.set(self.body.pos)
+        line = Line(start, end)
 
-        self.world.viewer.draw([self.body, l])
+        self.world.viewer.draw([self.body, line])
+
 
 class RaceCar(Car):
     def __init__(self, world):
         Car.__init__(self, world)
 
-        self.curent_track = 0
+        self.current_track = 0
 
         self.last_gateTime = timeit.default_timer()
 
         self.stop = 0
 
     def start(self):
-        ct = self.world.track.tracks[self.curent_track]
-        #ct.activate()
+        ct = self.world.track.tracks[self.current_track]
+        # ct.activate()
         self.pos.set(ct.getCenter())
 
-        orientation = Vector(); orientation.set(ct.next_track.gate.end)
+        orientation = Vector()
+        orientation.set(ct.next_track.gate.end)
         orientation.add(ct.next_track.gate.start)
         orientation.div((2, 2))
         self.world.viewer.draw([Circle(5, orientation)])
         orientation.sub(self.pos)
 
         for i in range(100):
-            dir = self.body.getMidPoint()
+            direction = self.body.getMidPoint()
 
-            a = orientation.getAngleDiff(dir)
-            a *= -1 if orientation.y / (dir.y * orientation.x ) > dir.x else 1
+            a = orientation.getAngleDiff(direction)
+            a *= -1 if orientation.y / (direction.y * orientation.x) > direction.x else 1
 
             self.body.rotate(a)
 
-            ldir = self.body.getMidPoint()
+            line_direction = self.body.getMidPoint()
 
-            if ldir.x == dir.x and ldir.y == dir.y:
+            if line_direction.x == direction.x and line_direction.y == direction.y:
                 break
 
     def getCurrentGate(self):
-        return self.world.track.tracks[self.curent_track]
+        return self.world.track.tracks[self.current_track]
 
-    def updateCurentTrack(self):
-        ct = self.world.track.tracks[self.curent_track]
-        #ct.activate()
+    def updateCurrentTrack(self):
+        ct = self.world.track.tracks[self.current_track]
+        # ct.activate()
 
         if self.colliding(ct.next_track.gate):
             self.nextGate()
 
     def nextGate(self):
-        ct = self.world.track.tracks[self.curent_track]
-        #ct.deactivate()
-
-        self.curent_track = (self.curent_track + 1) % len(self.world.track.tracks)
+        self.current_track = (self.current_track + 1) % len(self.world.track.tracks)
 
     def updateCol(self):
-        ct = self.world.track.tracks[self.curent_track]
-        lt = self.world.track.tracks[(self.curent_track - 1) % len(self.world.track.tracks)]
+        ct = self.world.track.tracks[self.current_track]
+        lt = self.world.track.tracks[(self.current_track - 1) % len(self.world.track.tracks)]
 
         for line in [ct.track_inner, ct.track_outer, lt.track_inner, lt.track_outer, lt.gate]:
             if self.colliding(line):
@@ -688,22 +731,22 @@ class RaceCar(Car):
 
     def update(self):
         if not self.stop:
-            #self.start()
+            # self.start()
             self.updatePos()
             self.input()
             self.updateFriction()
             self.applyAcc()
             self.applyVel()
-            self.updateCurentTrack()
+            self.updateCurrentTrack()
             self.updateCol()
 
-import numpy as np
 
 def relu(val):
     return min(max(0, val), 100)
 
+
 def tanh(val):
-    return ( 2.0 / ( 1 + math.pow(math.e, -2 * val / 10.0) ) ) - 1
+    return (2.0 / (1 + math.pow(math.e, -2 * val / 10.0))) - 1
 
 
 class Dense:
@@ -715,11 +758,11 @@ class Dense:
 
         self.activation = activation
 
-    def call(self, input):
-        output = np.array([input[i] * self.weights[i] for i in range(len(self.weights))])
+    def call(self, _input):
+        output = np.array([_input[i] * self.weights[i] for i in range(len(self.weights))])
         output += self.bias
 
-        output = np.array([np.sum(output[:,i]) for i in range(len(self.weights[0]))])
+        output = np.array([np.sum(output[:, i]) for i in range(len(self.weights[0]))])
         output = np.array([self.activation(val) for val in output])
 
         self.output = output
@@ -732,21 +775,22 @@ class Dense:
     def setRandomBiases(self, amt):
         self.bias = np.random.normal(0, amt, self.bias.shape)
 
+
 class AutoBrain:
     def __init__(self, auto):
         self.auto = auto
-
+        self.num_input = 8
         self.input = []
-        self.dense1 = Dense(5, 4, relu)
-        self.dense2 = Dense(4, 3, relu)
-        self.out = Dense(3, 2, tanh)
+        self.dense1 = Dense(self.num_input, 12, relu)  # KERU speed
+        self.dense2 = Dense(12, 6, relu)
+        self.out = Dense(6, 2, tanh)
 
-        self.randomize(self.auto.world.learning_rate)
+        self.randomize(self.auto.world.learning_rate)  # KERU
 
-    def call(self, input):
-        self.input = input
-        input = np.array(input)
-        output = self.dense1.call(input)
+    def call(self, _input):
+        self.input = _input
+        _input = np.array(_input)
+        output = self.dense1.call(_input)
         output = self.dense2.call(output)
         output = self.out.call(output)
 
@@ -761,7 +805,6 @@ class AutoBrain:
         self.dense2.setRandomBiases(amt)
         self.out.setRandomBiases(amt)
 
-
     def mutate(self, parent, amt):
         self.randomize(amt)
 
@@ -772,22 +815,23 @@ class AutoBrain:
         self.out.weights += parent.out.weights
         self.out.bias += parent.out.bias
 
-    def draw(self, boundingRect):
+    def draw(self, bounding_rect):
         layers = [self.dense1, self.dense2, self.out]
-        width = boundingRect.size.x / (len(layers) + 1)
+        width = bounding_rect.size.x / (len(layers) + 1)
 
         last_layer = []
 
-        height = boundingRect.size.y / len(self.input)
-        pos = Vector(); pos.set(boundingRect.pos)
+        height = bounding_rect.size.y / len(self.input)
+        pos = Vector()
+        pos.set(bounding_rect.pos)
 
-        size = 5
+        # size = self.num_input #KERU speed
 
-        for input in self.input:
-            activation = max(min( (input / 100 ), 1), 0)
+        for _input in self.input:
+            activation = max(min((_input / 100), 1), 0)
             color = int(activation * 255)
 
-            unit = Circle(size, pos, (color, color, color))
+            unit = Circle(6, pos, (color, color, color))
             unit.pos.add((0, height / 2.0))
             self.auto.world.viewer.draw([unit])
             pos.add((0, height))
@@ -796,8 +840,9 @@ class AutoBrain:
 
         for i, layer in enumerate(layers):
             if len(layer.output) > 0:
-                height = boundingRect.size.y / len(layer.output)
-                pos = Vector(); pos.set(boundingRect.pos)
+                height = bounding_rect.size.y / len(layer.output)
+                pos = Vector()
+                pos.set(bounding_rect.pos)
                 pos.add((width * (i + 1), 0))
 
                 units = []
@@ -805,23 +850,24 @@ class AutoBrain:
 
                 for j, val in enumerate(layer.output):
                     if i < 2:
-                        activation = max(min( ( (val ) / 100.0 ), 1), 0)
+                        activation = max(min((val / 100.0), 1), 0)
                     else:
-                        activation = max(min( ( (val + 1) / 2.0 ), 1), 0)
+                        activation = max(min(((val + 1) / 2.0), 1), 0)
 
                     color = int(activation * 255)
 
-                    unit = Circle(size, pos, (color, color, color))
+                    unit = Circle(5, pos, (color, color, color))
                     unit.pos.add((0, height / 2.0))
-                    #self.auto.world.viewer.draw([unit])
+                    # self.auto.world.viewer.draw([unit])
                     pos.add((0, height))
 
                     for k, lunit in enumerate(last_layer):
-                        activation = max(min( ( (abs(layer.weights[k][j])) / .2 ), 1), 0)
-                        w = int(3 * activation) + 1
-                        conn = Line(lunit.pos, unit.pos, (0, 0, 0), w)
+                        activation = max(min(((abs(layer.weights[k][j])) / .2), 1), 0)
+                        w = int(activation)  # KERU was 3 * activation + 1
+                        # conn = Line(lunit.pos, unit.pos, (0, 0, 0), w)
+                        conn = Line(lunit.pos, unit.pos, (activation * 128, activation, activation), w)
                         conns.append(conn)
-                        #self.auto.world.viewer.draw([conn])
+                        # self.auto.world.viewer.draw([conn])
 
                     units.append(unit)
 
@@ -832,19 +878,21 @@ class AutoBrain:
 
         self.auto.world.viewer.draw(last_layer)
 
+
 class Auto(RaceCar):
     next_id = 0
 
-    def __init__(self, world, parent = None):
+    def __init__(self, world, parent=None):
         RaceCar.__init__(self, world)
-
+        self.start_time = pygame.time.get_ticks()
+        self.current_track = 0
         self.top = 0
 
         self.brain = AutoBrain(self)
 
-        self.engine_amt = 0 # 0 - 1
-        self.break_amt = 0 # 0 - 1
-        self.turn_amt = 0 # -1 - 1
+        self.engine_amt = 0  # 0 - 1
+        self.break_amt = 0  # 0 - 1
+        self.turn_amt = 0  # -1 - 1
 
         self.fitness = 0
 
@@ -858,17 +906,18 @@ class Auto(RaceCar):
         Auto.next_id += 1
 
     def getName(self):
-        return "Auto_{}".format(self.id) if self.parent == None else "{}_{}".format(self.parent.name, self.id)
+        return "Auto_{}".format(self.id) if self.parent is None else "{}_{}".format(self.parent.name, self.id)
 
     def start(self):
         self.fitness = 0
-        self.curent_track = 0
+        self.current_track = 0
         self.stop = 0
         self.vel.set((0, 0))
         self.acc.set((0, 0))
         RaceCar.start(self)
         self.getCurrentGate().activate()
         self.stop = 0
+        self.start_time = pygame.time.get_ticks()
 
     def nextGate(self):
         if self.top:
@@ -879,16 +928,17 @@ class Auto(RaceCar):
         self.fitness += 1
 
     def getInputs(self):
-        max_dis = 400
+        max_dis = 2000
 
-        angles = [-40, -20, 0, 20, 40]
+        angles = [-90, -40, -20, 0, 20, 40, 90]
         self.inputs = []
         inputs = []
 
         for angle in angles:
-            start = Vector(); start.set(self.pos)
+            start = Vector()
+            start.set(self.pos)
             end = self.body.getMidPoint(0, 1)
-            end.rotate(angle, degree = True)
+            end.rotate(angle, degree=True)
             end.setMag(max_dis)
             end.add(start)
 
@@ -896,53 +946,60 @@ class Auto(RaceCar):
             col = None
             i = 0
 
-            while i < len(self.world.track.tracks) and col == None:
+            cols = []  # KERU collision fix ?
+            while i < len(self.world.track.tracks) and col is None:
                 index = math.ceil(i / 2.0) * (((i % 2) * 2) - 1)
-                track = self.world.track.tracks[(index + self.curent_track) % len(self.world.track.tracks)]
+                track = self.world.track.tracks[(index + self.current_track) % len(self.world.track.tracks)]
                 walls = [track.track_inner, track.track_outer]
-                cols = []
+
+                cols = []  # should it be here ?
 
                 for wall in walls:
                     c = ray.getLineIntercept(wall)
-                    if not c == None:
+                    if c is not None:
                         cols.append(c)
 
                 min_dis = None
                 col = None
                 for c in cols:
                     dis = start.getDis(c)
-                    if min_dis == None or dis < min_dis:
+                    if min_dis is None or dis < min_dis:
                         min_dis = dis
                         col = c
 
                 i += 1
+            # print(cols)
+            if pygame.time.get_ticks() - self.start_time > 2000:
+                if not cols:  # same as if len(cols) == 0
+                    self.stop = 1  # KERU collision fix
 
-            if col == None:
+            if col is None:
                 col = end
 
             if self.top or 0:
                 self.inputs.append(Circle(5, col))
-                #self.inputs.append(Line(start, col, (255, 255, 255)))
+                # self.inputs.append(Line(start, col, (255, 255, 255)))
 
             dis = start.getDis(col)
             inputs.append(dis)
 
-
         return inputs
 
-    def getOutput(self, input):
-        output = self.brain.call(input)
+    def getOutput(self, _input):
+        output = self.brain.call(_input)
 
         self.engine_amt = max(0, output[0])
         self.break_amt = min(0, output[0])
         self.turn_amt = output[1]
 
     def act(self):
-        input = self.getInputs()
-        self.getOutput(input)
+        _input = self.getInputs()
+        # if self.vel.getMag() != 0: print(self.vel.getMag() / 255) # KERU speed
+        _input.append(self.vel.getMag() / 20)  # KERU speed
+        self.getOutput(_input)
 
         self.applyBreakingForce(self.break_amt)
-        #print(self.world.dt)
+        # print(self.world.dt)
         self.applyEngineForce(self.engine_amt)
         self.turn(self.turn_amt)
 
@@ -953,7 +1010,7 @@ class Auto(RaceCar):
             self.applyAcc()
             self.applyVel()
             self.updatePos()
-            self.updateCurentTrack()
+            self.updateCurrentTrack()
             self.updateCol()
 
         c = (51, 51, 51)
@@ -972,7 +1029,7 @@ class Auto(RaceCar):
 
 
 class Track:
-    def __init__(self, so = (0, 0), si = (0, 0), eo = (0, 0), ei = (0, 0), nt = None):
+    def __init__(self, so=(0, 0), si=(0, 0), eo=(0, 0), ei=(0, 0), nt=None):
         self.track_outer = Line(so, eo)
         self.track_inner = Line(si, ei)
         self.gate = Line(so, si)
@@ -1003,9 +1060,9 @@ class RaceTrack:
         self.tracks = []
         self.world = world
 
-        self.dir = (random.randint(0, 1) * 2) - 1
+        self.dir = (randint(0, 1) * 2) - 1
 
-    def generateTrack(self, boundingRect, width):
+    def generateTrack(self, bounding_rect, width):
         self.tracks = []
 
         track_outer = Poly()
@@ -1014,55 +1071,63 @@ class RaceTrack:
         track_outer.points = []
         track_inner.points = []
 
-        points = np.random.rand(random.randint(20, 30), 2)
+        # points = np.random.rand(randint(20, 30), 2)
+        points = np.random.rand(randint(20, 30), 2)  # KERU
+        # print(points)
         hull = ConvexHull(points)
 
-        self.dir = (random.randint(0, 1) * 2) - 1
+        self.dir = (randint(0, 1) * 2) - 1
 
-        verts = hull.vertices#[::self.dir]
+        verts = hull.vertices  # [::self.dir]
 
         for vert in verts:
             point = points[vert]
             point -= [.5, .5]
-            point = (point * [boundingRect.size.x, boundingRect.size.y])
+            point = (point * [bounding_rect.size.x, bounding_rect.size.y])
             point = Vector(point[0], point[1])
             d = 100
             for p in track_outer.points:
-                d = Vector(); d.set(point)
+                d = Vector()
+                d.set(point)
                 d.sub(p)
                 d = d.getMag()
                 if d < 80:
                     break
-            if(d > 80):
+            if d > 80:
                 track_outer.points.append(point)
                 track_inner.points.append(Vector(point[0], point[1]))
 
-        track_outer.pos = boundingRect.getCenter()
-        track_inner.pos = boundingRect.getCenter()
+        track_outer.pos = bounding_rect.getCenter()
+        track_inner.pos = bounding_rect.getCenter()
 
-        #boundingRect = self.track_outer.getBoundingRect()
+        # boundingRect = self.track_outer.getBoundingRect()
 
-        #scale = Vector(width, width)
-        #scale.sub(boundingRect.size)
-        #scale.div(boundingRect.size)
-        #scale.mult((-1, -1))
+        # scale = Vector(width, width)
+        # scale.sub(boundingRect.size)
+        # scale.div(boundingRect.size)
+        # scale.mult((-1, -1))
 
-        scale = -1 * ((width / min(boundingRect.size.x, boundingRect.size.y)) - 1)
+        scale = -1 * ((width / min(bounding_rect.size.x, bounding_rect.size.y)) - 1)
 
-        track_inner.shift(boundingRect.pos)
+        track_inner.shift(bounding_rect.pos)
         track_inner.scale((scale, scale))
 
-        shift = Vector(); shift.set(boundingRect.size)
+        shift = Vector()
+        shift.set(bounding_rect.size)
         shift.mult((1 - scale, 1 - scale))
         shift.div((-2, -2))
         track_inner.shift(shift)
-        track_inner.shift((boundingRect.pos.x * -1, boundingRect.pos.y * -1))
+        track_inner.shift((bounding_rect.pos.x * -1, bounding_rect.pos.y * -1))
 
         for i in range(len(track_outer.points)):
-            si = Vector(); si.set(track_inner.points[i - 1])
-            so = Vector(); so.set(track_outer.points[i - 1])
-            ei = Vector(); ei.set(track_inner.points[i])
-            eo = Vector(); eo.set(track_outer.points[i])
+            si = Vector()
+            si.set(track_inner.points[i - 1])
+            so = Vector()
+            so.set(track_outer.points[i - 1])
+            ei = Vector()
+            ei.set(track_inner.points[i])
+            eo = Vector()
+            eo.set(track_outer.points[i])
             si.add(track_inner.pos)
             ei.add(track_inner.pos)
             so.add(track_outer.pos)
@@ -1077,7 +1142,7 @@ class RaceTrack:
 
     def draw(self):
         circles = []
-        lines = [] #[Line(self.points[0], self.points[-1])]
+        lines = []  # [Line(self.points[0], self.points[-1])]
 
         for track in self.tracks:
             lines.append(track.track_outer)
@@ -1089,6 +1154,7 @@ class RaceTrack:
 
         self.world.viewer.draw(circles + lines)
 
+
 class AutoSimulation:
     def __init__(self):
         self.viewer = TargetViewer(self)
@@ -1098,29 +1164,32 @@ class AutoSimulation:
         self.top_auto = None
         self.track = RaceTrack(self)
 
-        self.learning_rate = .1
+        self.learning_rate = .1  # KERU original was .1
 
         self.generation = 0
 
         self.events = []
         self.dt = 0
 
-        self.addNewAutos(40)
+        self.start_time = pygame.time.get_ticks()
+
+        self.addNewAutos(num_car)
 
     def generateTrack(self, difficulty):
-        size = random.randint(int(800 - (400 * difficulty)), 800)
-        width = size / 4
+        size = randint(int(800 - (400 * difficulty)), 800)
+        width = size / 4  # KERU was / 4
         self.track.generateTrack(Rect((size, size), (-size / 2.0, -size / 2.0)), width)
 
     def addNewAutos(self, n):
         for i in range(n):
             self.autos.append(Auto(self))
 
-    def loadAutos(self, files = []):
-        pass
+    #    @staticmethod
+    #    def loadAutos(files=[]):
+    #        pass
 
     def getMostFitAuto(self):
-        #print("----")
+        # print("----")
         max_fit = -1
         top_autos = []
         for auto in self.autos:
@@ -1131,7 +1200,7 @@ class AutoSimulation:
 
             if not auto.stop:
                 pass
-                #print(auto.fitness)
+                # print(auto.fitness)
 
             if auto.fitness == max_fit:
                 top_autos.append(auto)
@@ -1146,7 +1215,7 @@ class AutoSimulation:
 
         for auto in top_autos:
             dis = gate_pos.getDis(auto.pos)
-            if closest == None or dis < closest:
+            if closest is None or dis < closest:
                 closest = dis
                 top_auto = auto
 
@@ -1155,77 +1224,107 @@ class AutoSimulation:
         self.top_auto = top_auto
 
     def start(self):
-        d = 1.0 - (1.0 / ( (self.generation / 5.0) + 1.0 ))
+        d = 1.0 - (1.0 / ((self.generation / 5.0) + 1.0))
         self.generateTrack(d)
         self.text = Text("Generation : " + str(self.generation))
+        self.start_time = pygame.time.get_ticks()
         for car in self.autos:
             car.start()
-
 
     def update(self):
         for car in self.autos:
             car.update()
+            if pygame.time.get_ticks() - self.start_time > 5000:  # KERU
+                if car.vel.getMag() < 4:
+                    # print(car.vel.getMag())
+                    car.stop = 1
         self.getMostFitAuto()
         self.mouse.update()
         if not self.top_auto.stop:
             self.viewer.updatePos(self.top_auto.body.pos)
-        #self.generateTrack()
+        # self.generateTrack()
+
+        if pygame.time.get_ticks() - self.start_time > reset_timer:
+            self.reset()
 
     def cont(self):
         stopped = 0
         for car in self.autos:
             stopped += car.stop
 
-        all_stoped = stopped == len(self.autos)
+        all_stopped = stopped == (len(self.autos) - 1)  # KERU
 
-        #print(len(self.autos), stopped)
+        # print(len(self.autos), stopped)
 
-        for event in pygame.event.get():
-           if event.type == KEYDOWN:
-               if event.key == K_ESCAPE:
-                   return 0
-
-        return 1 - all_stoped
+        return 1 - all_stopped
 
     def end(self):
+
         new_batch = []
-        for i in range(len(self.autos) - 1):
+
+        # count car that are still running and make mutated child of them
+        running_car_count = 0
+        for running_auto in self.autos:
+            if running_auto.stop == 0:
+                running_car_count = running_car_count + 1
+                # new_batch.append(running_auto.makeChild())
+                new_batch.append(running_auto)
+
+        print("running cars : ", running_car_count)
+
+        # complete the list with mutated child of the top auto
+        for i in range(len(self.autos) - running_car_count):
             auto = self.top_auto.makeChild()
             new_batch.append(auto)
 
+        # finally, copy the new batch + the top auto (without mutating it) to the next batch
         self.autos = new_batch + [self.top_auto]
+
         self.generation += 1
 
         print("Generation:", self.generation - 1, "Done!")
 
     def render(self):
         for car in self.autos:
-            car.draw()
+            if not car.stop:  # KERU
+                car.draw()
         self.top_auto.draw()
-        #self.top_auto.brain.draw(Rect((200, 150), (self.viewer.pos.x + 50, self.viewer.pos.y + 50)))
+        self.top_auto.brain.draw(Rect((200, 150), (self.viewer.pos.x + 50, self.viewer.pos.y + 50)))
         self.track.draw()
         self.mouse.draw()
 
         self.text.draw(self.viewer.display)
 
         self.top_auto.brain.draw(Rect((200, 150), (self.viewer.pos.x + 50, self.viewer.pos.y + 50)))
-        self.viewer.draw(self.top_auto.inputs)
+        # KERU self.viewer.draw(self.top_auto.inputs)
         self.viewer.render()
         self.viewer.clear()
 
+    def reset(self):
+        self.end()
+        self.start()
+
 
 class Game:
-    def __init__(self, world = AutoSimulation()):
+    def __init__(self, world=AutoSimulation()):
         self.world = world
         self.fps = 60
+        self.running = 1
 
         self.t = timeit.default_timer()
 
     def update(self):
         self.world.events = pygame.event.get()
-        self.world.dt = (timeit.default_timer() - self.t)
+        self.world.dt = 0.01  # (timeit.default_timer() - self.t)
         self.world.update()
         self.t = timeit.default_timer()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    self.world.reset()
 
     def render(self):
         self.world.render()
@@ -1237,9 +1336,9 @@ class Game:
 
         self.world.start()
 
-        while running:
+        while running and self.running:
             self.update()
-            if (self.t - lr > 1. / self.fps):
+            if self.t - lr > 1. / self.fps:
                 self.render()
 
                 lr = timeit.default_timer()
@@ -1254,7 +1353,9 @@ class Game:
 def main():
     g = Game()
     g.world.generation += 1
-    while 1:
+    while g.running:
         g.play()
 
+
+# dis.dis(Line.getSlope)
 main()
