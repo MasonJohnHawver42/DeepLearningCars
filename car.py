@@ -64,8 +64,8 @@ class AutoBrain:
         self.auto = auto
         self.num_input = 9
         self.input = []
-        self.dense1 = Dense(self.num_input, self.num_input * 2 , lrelu)     #testing leaky relu
-        self.dense2 = Dense(self.num_input * 2, self.num_input // 2, relu)
+        self.dense1 = Dense(self.num_input, self.num_input , lrelu)     #testing leaky relu
+        self.dense2 = Dense(self.num_input, self.num_input // 2, relu)
         #self.dense3 = Dense(4, 3, relu)
         self.out = Dense(self.num_input // 2, 2, tanh)
         self.randomize(self.auto.world.learning_rate)
@@ -516,7 +516,9 @@ class Auto(RaceCar):
 
         self.body.color = c
 
-    def makeChild(self):
+    def makeChild(self, lr=None):
+        if lr is None:
+            lr = self.world.learning_rate
         child = Auto(self.world, self)
-        child.brain.mutate(self.brain, self.world.learning_rate)
+        child.brain.mutate(self.brain, lr)
         return child
