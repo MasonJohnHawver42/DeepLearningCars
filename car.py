@@ -18,14 +18,20 @@ class Dense:
     def __init__(self, input_size, output_size, activation):
         self.weights = np.zeros((input_size, output_size))
         self.bias = np.zeros(output_size)
+        #self.weights = np.random.random((input_size, output_size))
+        #self.bias = np.random.random(output_size)
         self.output = []
         self.activation = activation
 
+    # TODO: optimize this ! (23% cpu) (17% without numpy)
     def call(self, _input):
-        output = np.array([_input[i] * self.weights[i] for i in range(len(self.weights))])
+        # output = np.array([_input[i] * self.weights[i] for i in range(len(self.weights))]) # <- 4.5% on <listcomp>
+        output = [_input[i] * self.weights[i] for i in range(len(self.weights))]
         output += self.bias
-        output = np.array([np.sum(output[:, i]) for i in range(len(self.weights[0]))])
-        output = np.array([self.activation(val) for val in output])
+        # output = np.array([np.sum(output[:, i]) for i in range(len(self.weights[0]))]) # <- slowest (11% total, 9.8% on sum)
+        output = [sum(output[:, i]) for i in range(len(self.weights[0]))]
+        # output = np.array([self.activation(val) for val in output]) # <- 2.9% on <listcomp>, it's fine.
+        output = [self.activation(val) for val in output] # <- 2.9% on <listcomp>, it's fine.
         self.output = output
         return output
 
@@ -41,10 +47,11 @@ class AutoBrain:
         self.auto = auto
         self.num_input = 8
         self.input = []
-        self.dense1 = Dense(self.num_input, 12, relu)  # KERU speed
-        self.dense2 = Dense(12, 6, relu)
-        self.out = Dense(6, 2, tanh)
-        self.randomize(self.auto.world.learning_rate)  # KERU
+        self.dense1 = Dense(self.num_input, 20, relu)  # KERU speed
+        self.dense2 = Dense(20, 4, relu)
+        self.out = Dense(4, 2, tanh)
+        self.randomize(self.auto.world.learning_rate)
+        #self.randomize(0.1)
 
     def call(self, _input):
         self.input = _input
@@ -143,7 +150,7 @@ class Car(PhysicsEntity):
         self.c_rr = 12.8        # rolling resistance coef
         self.c_tf = 10          # tyre friction coef
 
-        self.breakingForce = 200000     # KERU original is 100000
+        self.breakingForce = 300000     # KERU original is 100000
         self.engineForce = 700000       # KERU : original is 350000
         self.accelerating = 0
         self.breaking = 0
@@ -159,7 +166,6 @@ class Car(PhysicsEntity):
             drag = Vector()
             drag.set(self.vel)
             d = self.c_drag * self.vel.getMag() * -1
-
             drag.mult((d, d))
             self.applyForce(drag)
 
@@ -168,7 +174,6 @@ class Car(PhysicsEntity):
             rr.set(self.vel)
             rr.mult((self.c_rr, self.c_rr))
             rr.mult((-1, -1))
-
             self.applyForce(rr)
 
         """ apply lateral friction"""
@@ -179,7 +184,6 @@ class Car(PhysicsEntity):
         lateral = self.body.getMidPoint().getReciprocal()
         lat_vel = lateral.getProjection(self.vel)
         lat_vel.mult((line, line))
-
         self.applyForce(lat_vel)
 
     def applyBreakingForce(self, amt=1):
@@ -221,7 +225,7 @@ class Car(PhysicsEntity):
     def turn(self, direction):
         new_sa = direction * self.max_steering_angle
         diff = new_sa - self.steering_angle
-        self.steering_angle += (diff * self.world.dt * 10)
+        self.steering_angle += (diff * self.world.dt * 20)
         self.rotate()
 
     def input(self):
@@ -360,9 +364,7 @@ class Auto(RaceCar):
         self.start_time = pygame.time.get_ticks()
         self.current_track = 0
         self.top = 0
-
         self.brain = AutoBrain(self)
-
         self.engine_amt = 0  # 0 - 1
         self.break_amt = 0  # 0 - 1
         self.turn_amt = 0  # -1 - 1

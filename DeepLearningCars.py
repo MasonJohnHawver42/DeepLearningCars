@@ -12,8 +12,8 @@ from viewer import TargetViewer
 pygame.init()
 
 reset_timer = 30000  # reset the track after n ms
-num_car = 200  # how many car to spawn
-
+num_car = 100  # how many car to spawn
+LEARNING_RATE = 0.05
 
 class AutoSimulation:
     def __init__(self):
@@ -23,7 +23,7 @@ class AutoSimulation:
         self.autos = []
         self.top_auto = None
         self.track = RaceTrack(self)
-        self.learning_rate = .1
+        self.learning_rate = LEARNING_RATE
         self.generation = 0
         self.events = []
         self.dt = 0

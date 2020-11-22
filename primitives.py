@@ -32,10 +32,11 @@ class Line:
     def inDomain(self, x):
         return min(self.start.x, self.end.x) < x < max(self.start.x, self.end.x)
 
+    # TODO: optimize this ! (14% CPU time)
     def getLineIntercept(self, line):
         m1 = self.getSlope()
-        b1 = self.getIntercept()
         m2 = line.getSlope()
+        b1 = self.getIntercept()
         b2 = line.getIntercept()
 
         try:
@@ -61,6 +62,7 @@ class Line:
         self.start.sub(s)
         self.end.sub(s)
 
+    # TODO : slow ! (only 3% but... meh)
     def scale(self, s):
         self.start.mult(s)
         self.end.mult(s)

@@ -16,6 +16,7 @@ class Viewer:
         self.size.set(size)
         self.pos = Vector()
         self.pos.set(pos)
+        self.display_size = self.display.get_size()
 
     def zoom(self, amt):
         old = Vector()
@@ -28,10 +29,11 @@ class Viewer:
     def clear(self, color=(100, 180, 110)):
         self.display.fill(color)
 
+    # TODO : optimize this ! (14% CPU time)
     def draw(self, shapes):
         shift = Vector(self.pos.x, self.pos.y)
         scale = Vector()
-        scale.set(self.display.get_size())
+        scale.set(self.display_size)
         scale.div(self.size)
 
         for shape in shapes:
