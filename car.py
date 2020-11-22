@@ -6,6 +6,10 @@ from physic import PhysicsEntity
 from primitives import *
 
 
+def lrelu(val):
+    #return min(max(0, val), 100)
+    return val * 0.01 if val < 0 else val
+
 def relu(val):
     return min(max(0, val), 100)
 
@@ -26,11 +30,12 @@ class Dense:
     # TODO: optimize this ! (23% cpu) (17% without numpy)
     def call(self, _input):
         # output = np.array([_input[i] * self.weights[i] for i in range(len(self.weights))]) # <- 4.5% on <listcomp>
+        #output += self.bias
+        # output = np.array([np.sum(output[:, i]) for i in range(len(self.weights[0]))]) # <- slowest (11% total, 9.8% on sum)
+        # output = np.array([self.activation(val) for val in output]) # <- 2.9% on <listcomp>, it's fine.
         output = [_input[i] * self.weights[i] for i in range(len(self.weights))]
         output += self.bias
-        # output = np.array([np.sum(output[:, i]) for i in range(len(self.weights[0]))]) # <- slowest (11% total, 9.8% on sum)
         output = [sum(output[:, i]) for i in range(len(self.weights[0]))]
-        # output = np.array([self.activation(val) for val in output]) # <- 2.9% on <listcomp>, it's fine.
         output = [self.activation(val) for val in output] # <- 2.9% on <listcomp>, it's fine.
         self.output = output
         return output
@@ -43,13 +48,25 @@ class Dense:
 
 
 class AutoBrain:
+    """
+    https://www.heatonresearch.com/2017/06/01/hidden-layers.html
+    I have a few rules of thumb that I use to choose hidden layers.
+    There are many rule-of-thumb methods for determining an acceptable number of neurons to use in the hidden layers,
+    such as the following:
+    The number of hidden neurons should be between the size of the input layer and the size of the output layer.
+    The number of hidden neurons should be 2/3 the size of the input layer, plus the size of the output layer.
+    The number of hidden neurons should be less than twice the size of the input layer.
+
+    KER approach : input -> input * 2, (optional input), input / 2, output
+    """
     def __init__(self, auto):
         self.auto = auto
         self.num_input = 8
         self.input = []
-        self.dense1 = Dense(self.num_input, 20, relu)  # KERU speed
-        self.dense2 = Dense(20, 8, relu)
-        self.out = Dense(8, 2, tanh)
+        self.dense1 = Dense(self.num_input, self.num_input * 2 , lrelu)     #testing leaky relu
+        self.dense2 = Dense(self.num_input * 2, self.num_input // 2, relu)
+        #self.dense3 = Dense(4, 3, relu)
+        self.out = Dense(self.num_input // 2, 2, tanh)
         self.randomize(self.auto.world.learning_rate)
         #self.randomize(0.1)
 
@@ -58,16 +75,19 @@ class AutoBrain:
         _input = np.array(_input)
         output = self.dense1.call(_input)
         output = self.dense2.call(output)
+        #output = self.dense3.call(output)
         output = self.out.call(output)
         return output
 
     def randomize(self, amt):
         self.dense1.setRandomWeights(amt)
         self.dense2.setRandomWeights(amt)
+        #self.dense3.setRandomWeights(amt)
         self.out.setRandomWeights(amt)
 
         self.dense1.setRandomBiases(amt)
         self.dense2.setRandomBiases(amt)
+        #self.dense3.setRandomBiases(amt)
         self.out.setRandomBiases(amt)
 
     def mutate(self, parent, amt):
@@ -76,10 +96,13 @@ class AutoBrain:
         self.dense1.bias += parent.dense1.bias
         self.dense2.weights += parent.dense2.weights
         self.dense2.bias += parent.dense2.bias
+        #self.dense3.weights += parent.dense3.weights
+        #self.dense3.bias += parent.dense3.bias
         self.out.weights += parent.out.weights
         self.out.bias += parent.out.bias
 
     def draw(self, bounding_rect):
+        #layers = [self.dense1, self.dense2, self.dense3, self.out]
         layers = [self.dense1, self.dense2, self.out]
         width = bounding_rect.size.x / (len(layers) + 1)
         last_layer = []

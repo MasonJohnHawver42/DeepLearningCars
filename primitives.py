@@ -20,10 +20,6 @@ class Line:
             return None
 
     def getIntercept(self):
-        # m = self.getSlope()
-        # if m is not None:
-        #    return self.start.y - (m * self.start.x)
-        # return None
         try:
             return self.start.y - (((self.start.y - self.end.y) / (self.start.x - self.end.x)) * self.start.x)
         except ZeroDivisionError:
