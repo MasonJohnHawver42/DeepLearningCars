@@ -62,7 +62,7 @@ class AutoBrain:
     """
     def __init__(self, auto):
         self.auto = auto
-        self.num_input = 8
+        self.num_input = 9
         self.input = []
         self.dense1 = Dense(self.num_input, self.num_input * 2 , lrelu)     #testing leaky relu
         self.dense2 = Dense(self.num_input * 2, self.num_input // 2, relu)
@@ -169,6 +169,7 @@ class Car(PhysicsEntity):
         self.body = Poly()
         self.body.setByRect(Rect())
         self.steering_angle = 0
+        self.lat_vel = Vector()
         self.max_steering_angle = math.pi / 6
         # self.c_drag = .4257   # drag coef
         # self.c_rr = 12.8      # rolling resistance coef
@@ -211,6 +212,7 @@ class Car(PhysicsEntity):
         lateral = self.body.getMidPoint().getReciprocal()
         lat_vel = lateral.getProjection(self.vel)
         lat_vel.mult((line, line))
+        self.lat_vel = lat_vel  # KERU add, lateral velocity as input
         self.applyForce(lat_vel)
 
     def applyBreakingForce(self, amt=1):
@@ -440,6 +442,7 @@ class Auto(RaceCar):
             ray = Line(start, end)
             col = None
             i = 0
+
             cols = []  # KERU collision fix ?
 
             while i < len(self.world.track.tracks) and col is None:
@@ -473,7 +476,7 @@ class Auto(RaceCar):
 
             if self.top or 0:
                 self.inputs.append(Circle(5, col))
-                # self.inputs.append(Line(start, col, (255, 255, 255)))
+                #self.inputs.append(Line(start, col, (255, 255, 255)))
 
             dis = start.getDis(col)
             inputs.append(dis)
@@ -488,7 +491,8 @@ class Auto(RaceCar):
 
     def act(self):
         _input = self.getInputs()
-        _input.append(self.vel.getMag() / 20)  # KERU speed
+        _input.append(self.vel.getMag() / 20)   # add speed as input
+        _input.append(self.lat_vel.getMag() / 10000)             # add lateral velocity as input
         self.getOutput(_input)
         self.applyBreakingForce(self.break_amt)
         self.applyEngineForce(self.engine_amt)
