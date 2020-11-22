@@ -35,8 +35,8 @@ class Line:
     # TODO: optimize this ! (14% CPU time)
     def getLineIntercept(self, line):
         m1 = self.getSlope()
-        m2 = line.getSlope()
         b1 = self.getIntercept()
+        m2 = line.getSlope()
         b2 = line.getIntercept()
 
         try:
@@ -44,6 +44,7 @@ class Line:
         except (ZeroDivisionError, TypeError) as e:
             print("Exception in GetLineIntercept : %s", e)
             return None
+
         if self.inDomain(xi) and line.inDomain(xi):
             yi = (m1 * xi) + b1
             return Vector(xi, yi)

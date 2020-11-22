@@ -12,12 +12,12 @@ class Vector:
         return self
 
     def __getitem__(self, key: int) -> int or float:
-        if key % 2 == 0:
-            return self.x
-        return self.y
+        return self.x if key == 0 else self.y
+#        if key % 2 == 0:
+#            return self.x
+#        return self.y
 
     def __len__(self) -> int:
-        """Always return 2"""
         return 2
 
     def set(self, iterable) -> None:
@@ -57,7 +57,7 @@ class Vector:
         self.setMag(1)
 
     def getMag(self) -> float:
-        return math.sqrt(pow(self.x, 2) + pow(self.y, 2))
+        return math.sqrt(self.x * self.x + self.y * self.y)
 
     def setMag(self, mag) -> None:
         mag = mag / self.getMag()

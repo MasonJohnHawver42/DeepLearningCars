@@ -48,8 +48,8 @@ class AutoBrain:
         self.num_input = 8
         self.input = []
         self.dense1 = Dense(self.num_input, 20, relu)  # KERU speed
-        self.dense2 = Dense(20, 4, relu)
-        self.out = Dense(4, 2, tanh)
+        self.dense2 = Dense(20, 8, relu)
+        self.out = Dense(8, 2, tanh)
         self.randomize(self.auto.world.learning_rate)
         #self.randomize(0.1)
 

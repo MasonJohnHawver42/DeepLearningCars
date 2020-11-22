@@ -9,24 +9,26 @@ from primitives import *
 from track import RaceTrack
 from viewer import TargetViewer
 
-pygame.init()
-
 reset_timer = 30000  # reset the track after n ms
 num_car = 100  # how many car to spawn
 LEARNING_RATE = 0.05
 
+pygame.init()
+
+
 class AutoSimulation:
     def __init__(self):
+        self.autos = []
+        self.events = []
+        self.generation = 0
+        self.dt = 0
+        self.top_auto = None
+        self.slow_car_removed = False
+        self.learning_rate = LEARNING_RATE
         self.viewer = TargetViewer(self)
         self.mouse = Mouse(self)
-        self.text = Text("Generation : 0")
-        self.autos = []
-        self.top_auto = None
         self.track = RaceTrack(self)
-        self.learning_rate = LEARNING_RATE
-        self.generation = 0
-        self.events = []
-        self.dt = 0
+        self.text = Text("Generation : 0")
         self.start_time = pygame.time.get_ticks()
         self.addNewAutos(num_car)
 
@@ -36,7 +38,7 @@ class AutoSimulation:
         self.track.generateTrack(Rect((size, size), (-size / 2.0, -size / 2.0)), width)
 
     def addNewAutos(self, n):
-        for i in range(n):
+        for _ in range(n):
             self.autos.append(Auto(self))
 
     def getFittestAuto(self):
@@ -78,16 +80,24 @@ class AutoSimulation:
 
     def update(self):
         for car in self.autos:
-            car.update()
-            if pygame.time.get_ticks() - self.start_time > 5000:  # KERU
-                if car.vel.getMag() < 4:
-                    car.stop = 1
+            if not car.stop:    # only update unstopped car
+                car.update()
+                if (not self.slow_car_removed) and ((pygame.time.get_ticks() - self.start_time) > 5000):
+                    """remove slow car after N ms"""
+                    if car.vel.getMag() < 50:
+                        car.stop = 1
+
+        if (not self.slow_car_removed) and ((pygame.time.get_ticks() - self.start_time) > 5000):
+            """Slow car removed"""
+            self.slow_car_removed == True
+
         self.getFittestAuto()
         self.mouse.update()
 
         if not self.top_auto.stop:
             self.viewer.updatePos(self.top_auto.body.pos)
         if pygame.time.get_ticks() - self.start_time > reset_timer:
+            print("Maximum time reached")
             self.reset()
 
     def cont(self):
@@ -103,8 +113,9 @@ class AutoSimulation:
         running_car_count = 0
         for running_auto in self.autos:
             if running_auto.stop == 0:
+
                 running_car_count = running_car_count + 1
-                # new_batch.append(running_auto.makeChild())    # you can send send mutated child instead too
+                # new_batch.append(running_auto.makeChild())    # you can send mutated child instead too
                 new_batch.append(running_auto)
 
         print("running cars : ", running_car_count)
@@ -148,7 +159,7 @@ class Game:
 
     def update(self):
         self.world.events = pygame.event.get()
-        self.world.dt = 0.01  # make the simulation independent of framerate
+        self.world.dt = 1/120  # make the physic run at a "simulated" 120fps
         # self.world.dt = (timeit.default_timer() - self.t)  # make simulation dependent of framerate
         self.world.update()
         self.t = timeit.default_timer()
