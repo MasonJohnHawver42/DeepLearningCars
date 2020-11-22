@@ -1,6 +1,7 @@
 import math
 import timeit
 import numpy as np
+import random
 
 from physic import PhysicsEntity
 from primitives import *
@@ -68,7 +69,6 @@ class AutoBrain:
         #self.dense3 = Dense(4, 3, relu)
         self.out = Dense(self.num_input // 2, 2, tanh)
         self.randomize(self.auto.world.learning_rate)
-        #self.randomize(0.1)
 
     def call(self, _input):
         self.input = _input
@@ -80,15 +80,19 @@ class AutoBrain:
         return output
 
     def randomize(self, amt):
-        self.dense1.setRandomWeights(amt)
-        self.dense2.setRandomWeights(amt)
-        #self.dense3.setRandomWeights(amt)
-        self.out.setRandomWeights(amt)
-
-        self.dense1.setRandomBiases(amt)
-        self.dense2.setRandomBiases(amt)
-        #self.dense3.setRandomBiases(amt)
-        self.out.setRandomBiases(amt)
+        # testing : only update some (1 = 50% chance, 2 = 66%, 3 = 75%, ...)
+        if random.getrandbits(1):
+            self.dense1.setRandomWeights(amt)
+            self.dense1.setRandomBiases(amt)
+        if random.getrandbits(1):
+            self.dense2.setRandomWeights(amt)
+            self.dense2.setRandomBiases(amt)
+        #if random.getrandbits(1):
+            #self.dense3.setRandomWeights(amt)
+            #self.dense3.setRandomBiases(amt)
+        if random.getrandbits(1):
+            self.out.setRandomWeights(amt)
+            self.out.setRandomBiases(amt)
 
     def mutate(self, parent, amt):
         self.randomize(amt)
@@ -99,7 +103,7 @@ class AutoBrain:
         #self.dense3.weights += parent.dense3.weights
         #self.dense3.bias += parent.dense3.bias
         self.out.weights += parent.out.weights
-        self.out.bias += parent.out.bias
+        self.out.bias += parent.out.bias * amt
 
     def draw(self, bounding_rect):
         #layers = [self.dense1, self.dense2, self.dense3, self.out]
