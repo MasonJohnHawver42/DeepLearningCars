@@ -1,8 +1,7 @@
 import os
-
 import pygame
-from pygame.locals import *
 
+from pygame.locals import *
 from vector import Vector
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (20, 30)
@@ -53,12 +52,10 @@ class Viewer:
 
 
 class TargetViewer(Viewer):
-    def __init__(self, world, target=(0, 0), display=pygame.display.set_mode((1000, 1000)), size=(800, 800),
-                 pos=(-400, -400)):
+    def __init__(self, world, target=(0, 0), display=pygame.display.set_mode((1000, 1000)), size=(800, 800), pos=(-400, -400)):
         Viewer.__init__(self, world, display, size, pos)
         self.target = Vector()
         self.target.set(target)
-
         self.speed = 10
 
     def updatePos(self, target=None):
@@ -71,9 +68,7 @@ class TargetViewer(Viewer):
             vel = Vector()
             vel.set(self.target)
             vel.sub(self.pos)
-
             # vel.limitMag(self.speed)
             vel.mult((self.world.dt, self.world.dt))
             vel.mult((self.speed, self.speed))
-
             self.pos.add(vel)
