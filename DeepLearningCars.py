@@ -11,7 +11,9 @@ from viewer import TargetViewer
 
 reset_timer = 30000  # reset the track after n ms
 num_car = 100  # how many car to spawn
-LEARNING_RATE = 0.05
+LEARNING_RATE = 0.1
+LEARNING_RATE_DEC = 0.01
+LEARNING_RATE_MIN = 0.01
 
 pygame.init()
 
@@ -108,7 +110,16 @@ class AutoSimulation:
         return 1 - all_stopped
 
     def end(self):
+        #global LEARNING_RATE_DEC, LEARNING_RATE_MIN
         new_batch = []
+
+        #update the learning rate
+        if self.learning_rate > LEARNING_RATE_MIN:
+            self.learning_rate -= LEARNING_RATE_DEC
+        else:
+            self.learning_rate = LEARNING_RATE_MIN
+        print("Learning rate : %.4f" % self.learning_rate)
+
         # count car that are still running and send them for the next run as-is
         running_car_count = 0
         for running_auto in self.autos:
