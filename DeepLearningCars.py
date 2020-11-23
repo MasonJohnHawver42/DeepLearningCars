@@ -109,7 +109,7 @@ class AutoSimulation:
         stopped = 0
         for car in self.autos:
             stopped += car.stop
-        all_stopped = stopped == (len(self.autos) - 1)  # KERU
+        all_stopped = stopped == (len(self.autos))
         return 1 - all_stopped
 
     def end(self):
