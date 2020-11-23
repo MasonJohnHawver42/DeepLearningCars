@@ -1,5 +1,4 @@
 import math
-import timeit
 import numpy as np
 import random
 
@@ -8,8 +7,8 @@ from primitives import *
 
 
 def lrelu(val):
-    #return min(max(0, val), 100)
     return val * 0.01 if val < 0 else val
+
 
 def relu(val):
     return min(max(0, val), 100)
@@ -23,21 +22,21 @@ class Dense:
     def __init__(self, input_size, output_size, activation):
         self.weights = np.zeros((input_size, output_size))
         self.bias = np.zeros(output_size)
-        #self.weights = np.random.random((input_size, output_size))
-        #self.bias = np.random.random(output_size)
+        # self.weights = np.random.random((input_size, output_size))
+        # self.bias = np.random.random(output_size)
         self.output = []
         self.activation = activation
 
     # TODO: optimize this ! (23% cpu) (17% without numpy)
     def call(self, _input):
         # output = np.array([_input[i] * self.weights[i] for i in range(len(self.weights))]) # <- 4.5% on <listcomp>
-        #output += self.bias
-        # output = np.array([np.sum(output[:, i]) for i in range(len(self.weights[0]))]) # <- slowest (11% total, 9.8% on sum)
+        # output += self.bias
+        # output = np.array([np.sum(output[:, i]) for i in range(len(self.weights[0]))]) # slowest (11% total)
         # output = np.array([self.activation(val) for val in output]) # <- 2.9% on <listcomp>, it's fine.
         output = [_input[i] * self.weights[i] for i in range(len(self.weights))]
         output += self.bias
         output = [sum(output[:, i]) for i in range(len(self.weights[0]))]
-        output = [self.activation(val) for val in output] # <- 2.9% on <listcomp>, it's fine.
+        output = [self.activation(val) for val in output]  # <- 2.9% on <listcomp>, it's fine.
         self.output = output
         return output
 
@@ -60,13 +59,14 @@ class AutoBrain:
 
     KER approach : input -> input * 2, (optional input), input / 2, output
     """
+
     def __init__(self, auto):
         self.auto = auto
         self.num_input = 9
         self.input = []
-        self.dense1 = Dense(self.num_input, self.num_input , lrelu)     #testing leaky relu
+        self.dense1 = Dense(self.num_input, self.num_input, lrelu)  # testing leaky relu
         self.dense2 = Dense(self.num_input, self.num_input // 2, relu)
-        #self.dense3 = Dense(4, 3, relu)
+        # self.dense3 = Dense(4, 3, relu)
         self.out = Dense(self.num_input // 2, 2, tanh)
         self.randomize(self.auto.world.learning_rate)
 
@@ -75,7 +75,7 @@ class AutoBrain:
         _input = np.array(_input)
         output = self.dense1.call(_input)
         output = self.dense2.call(output)
-        #output = self.dense3.call(output)
+        # output = self.dense3.call(output)
         output = self.out.call(output)
         return output
 
@@ -87,9 +87,9 @@ class AutoBrain:
         if random.getrandbits(1):
             self.dense2.setRandomWeights(amt)
             self.dense2.setRandomBiases(amt)
-        #if random.getrandbits(1):
-            #self.dense3.setRandomWeights(amt)
-            #self.dense3.setRandomBiases(amt)
+        # if random.getrandbits(1):
+        # self.dense3.setRandomWeights(amt)
+        # self.dense3.setRandomBiases(amt)
         if random.getrandbits(1):
             self.out.setRandomWeights(amt)
             self.out.setRandomBiases(amt)
@@ -100,13 +100,13 @@ class AutoBrain:
         self.dense1.bias += parent.dense1.bias
         self.dense2.weights += parent.dense2.weights
         self.dense2.bias += parent.dense2.bias
-        #self.dense3.weights += parent.dense3.weights
-        #self.dense3.bias += parent.dense3.bias
+        # self.dense3.weights += parent.dense3.weights
+        # self.dense3.bias += parent.dense3.bias
         self.out.weights += parent.out.weights
         self.out.bias += parent.out.bias * amt
 
     def draw(self, bounding_rect):
-        #layers = [self.dense1, self.dense2, self.dense3, self.out]
+        # layers = [self.dense1, self.dense2, self.dense3, self.out]
         layers = [self.dense1, self.dense2, self.out]
         width = bounding_rect.size.x / (len(layers) + 1)
         last_layer = []
@@ -174,12 +174,12 @@ class Car(PhysicsEntity):
         # self.c_drag = .4257   # drag coef
         # self.c_rr = 12.8      # rolling resistance coef
         # self.c_tf = 12        # tyre friction coef
-        self.c_drag = .4257     # drag coef
-        self.c_rr = 12.8        # rolling resistance coef
-        self.c_tf = 10          # tyre friction coef
+        self.c_drag = .4257  # drag coef
+        self.c_rr = 12.8  # rolling resistance coef
+        self.c_tf = 10  # tyre friction coef
 
-        self.breakingForce = 300000     # KERU original is 100000
-        self.engineForce = 700000       # KERU : original is 350000
+        self.breakingForce = 300000  # KERU original is 100000
+        self.engineForce = 700000  # KERU : original is 350000
         self.accelerating = 0
         self.breaking = 0
         self.turning = 0
@@ -325,7 +325,7 @@ class RaceCar(Car):
     def __init__(self, world):
         Car.__init__(self, world)
         self.current_track = 0
-        self.last_gateTime = timeit.default_timer()
+        # self.last_gateTime = timeit.default_timer()
         self.stop = 0
 
     def start(self):
@@ -476,7 +476,7 @@ class Auto(RaceCar):
 
             if self.top or 0:
                 self.inputs.append(Circle(5, col))
-                #self.inputs.append(Line(start, col, (255, 255, 255)))
+                # self.inputs.append(Line(start, col, (255, 255, 255)))
 
             dis = start.getDis(col)
             inputs.append(dis)
@@ -491,8 +491,8 @@ class Auto(RaceCar):
 
     def act(self):
         _input = self.getInputs()
-        _input.append(self.vel.getMag() / 20)   # add speed as input
-        _input.append(self.lat_vel.getMag() / 10000)             # add lateral velocity as input
+        _input.append(self.vel.getMag() / 20)  # add speed as input
+        _input.append(self.lat_vel.getMag() / 15000)  # add lateral velocity as input
         self.getOutput(_input)
         self.applyBreakingForce(self.break_amt)
         self.applyEngineForce(self.engine_amt)

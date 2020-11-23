@@ -13,9 +13,6 @@ class Vector:
 
     def __getitem__(self, key: int) -> int or float:
         return self.x if key == 0 else self.y
-#        if key % 2 == 0:
-#            return self.x
-#        return self.y
 
     def __len__(self) -> int:
         return 2
