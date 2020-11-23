@@ -154,7 +154,7 @@ class AutoSimulation:
         self.mouse.draw()
         self.text.draw(self.viewer.display)
         self.top_auto.brain.draw(Rect((200, 150), (self.viewer.pos.x + 50, self.viewer.pos.y + 50)))
-        # self.viewer.draw(self.top_auto.inputs)     #enable to see sensor
+        self.viewer.draw(self.top_auto.inputs)     #enable to see sensor
         self.viewer.render()
         self.viewer.clear()
 

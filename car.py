@@ -446,19 +446,18 @@ class Auto(RaceCar):
             cols = []
 
             while i < len(self.world.track.tracks) and col is None:
+                cols = []  # should it be here ?
+                min_dis = None
+                col = None
                 index = math.ceil(i / 2.0) * (((i % 2) * 2) - 1)
                 track = self.world.track.tracks[(index + self.current_track) % len(self.world.track.tracks)]
                 walls = [track.track_inner, track.track_outer]
-
-                cols = []  # should it be here ?
 
                 for wall in walls:
                     c = ray.getLineIntercept(wall)
                     if c is not None:
                         cols.append(c)
 
-                min_dis = None
-                col = None
                 for c in cols:
                     dis = start.getDis(c)
                     if min_dis is None or dis < min_dis:
@@ -474,9 +473,10 @@ class Auto(RaceCar):
             if col is None:
                 col = end
 
+            # Show the ray and circle of the "lidar" input sensor
             if self.top or 0:
-                self.inputs.append(Circle(5, col))
-                self.inputs.append(Line(start, col, (255, 255, 255)))
+                self.inputs.append(Circle(3, col, (0,0,120)))
+                self.inputs.append(Line(start, col, (0,0,120), width=0))
 
             dis = start.getDis(col)
             inputs.append(dis)
