@@ -69,18 +69,18 @@ class Vector:
     def dot(self, vec) -> int or float:
         return (self.x * vec.x) + (vec.y * self.y)
 
-    def getProjection(self, vec: 'Vector'):
+    def getProjection(self, vec: 'Vector') -> 'Vector':
         """ projects vec onto self """
         p = self.dot(vec) / (self.getMag() ** 2)
         proj = Vector(self.x, self.y)
         proj.mult((p, p))
         return proj
 
-    def getReciprocal(self):
+    def getReciprocal(self) -> 'Vector':
         """ rot 90 """
         return Vector(self.y, -1 * self.x)
 
-    def rotate(self, a, c=(0, 0), degree=0):
+    def rotate(self, a, c=(0, 0), degree=0) -> None:
         self.sub(c)
         a = a / (180.0 / math.pi) if degree else a
         x = (self.x * math.cos(a)) - (self.y * math.sin(a))
@@ -88,16 +88,16 @@ class Vector:
         self.set((x, y))
         self.add(c)
 
-    def getAngleDiff(self, vec):
+    def getAngleDiff(self, vec) -> int or float:
         val = self.dot(vec) / (self.getMag() * vec.getMag())
         val = max(min(val, 1), -1)
         angle = math.acos(val)  # in radians
         return angle
 
-    def scale(self, scale, c=(0, 0)):
+    def scale(self, scale, c=(0, 0)) -> None:
         self.sub(c)
         self.mult(scale)
         self.add(c)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Vec = [x: {}, y: {}]".format(self.x, self.y)
