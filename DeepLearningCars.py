@@ -88,7 +88,7 @@ class AutoSimulation:
                 if (not self.slow_car_removed) and ((pygame.time.get_ticks() - self.start_time) > 5000):
                     """remove slow car after N ms"""
                     if car.vel.getMag() < 10:
-                        print("removing car ", car.vel.getMag())
+                        # print("removing car ", car.vel.getMag())
                         car.stop = 1
 
         # if (not self.slow_car_removed) and ((pygame.time.get_ticks() - self.start_time) > 5000):

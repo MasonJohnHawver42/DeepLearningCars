@@ -7,24 +7,22 @@ from primitives import *
 
 
 class Track:
-    def __init__(self, so=(0, 0), si=(0, 0), eo=(0, 0), ei=(0, 0), nt=None):
+    def __init__(self, so=(0, 0), si=(0, 0), eo=(0, 0), ei=(0, 0), nt=None) -> None:
         self.track_outer = Line(so, eo)
         self.track_inner = Line(si, ei)
         self.gate = Line(so, si)
-
         self.next_track = nt
-
         self.color = (0, 0, 0)
 
-    def activate(self):
+    def activate(self) -> None:
         self.color = (0, 0, 255)
         self.next_track.color = (0, 255, 0)
 
-    def deactivate(self):
+    def deactivate(self) -> None:
         self.color = (0, 0, 0)
         self.next_track.color = (0, 0, 0)
 
-    def getCenter(self):
+    def getCenter(self) -> Vector:
         center = Vector()
         for point in [self.track_outer.start, self.track_outer.end, self.track_inner.start, self.track_inner.end]:
             center.add(point)
@@ -40,7 +38,7 @@ class RaceTrack:
 
         self.dir = (randint(0, 1) * 2) - 1
 
-    def generateTrack(self, bounding_rect, width):
+    def generateTrack(self, bounding_rect, width) -> None:
         self.tracks = []
 
         track_outer = Poly()
@@ -114,7 +112,7 @@ class RaceTrack:
 
         self.tracks[len(self.tracks) - 1].next_track = self.tracks[0]
 
-    def draw(self):
+    def draw(self) -> None:
         circles = []
         lines = []  # [Line(self.points[0], self.points[-1])]
 

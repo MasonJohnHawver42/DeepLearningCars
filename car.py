@@ -426,9 +426,9 @@ class Auto(RaceCar):
             self.getCurrentGate().activate()
         self.fitness += 1
 
-    def getInputs(self):
+    def getInputs(self) -> []:
         max_dis = 2000
-        angles = [-90, -40, -20, 0, 20, 40, 90]
+        angles = [-90, -45, -20, 0, 20, 45, 90]
         self.inputs = []
         inputs = []
 
@@ -443,7 +443,7 @@ class Auto(RaceCar):
             col = None
             i = 0
 
-            cols = []  # KERU collision fix ?
+            cols = []
 
             while i < len(self.world.track.tracks) and col is None:
                 index = math.ceil(i / 2.0) * (((i % 2) * 2) - 1)
@@ -476,7 +476,7 @@ class Auto(RaceCar):
 
             if self.top or 0:
                 self.inputs.append(Circle(5, col))
-                # self.inputs.append(Line(start, col, (255, 255, 255)))
+                self.inputs.append(Line(start, col, (255, 255, 255)))
 
             dis = start.getDis(col)
             inputs.append(dis)
