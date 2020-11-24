@@ -76,8 +76,8 @@ class AutoBrain:
         self.num_input = 9
         self.input = []
         self.dense1 = Dense(self.num_input, 6, relu)  # testing logistic map
-        self.dense2 = Dense(6, 9, lrelu)
-        self.dense3 = Dense(9, 4, relu)
+        self.dense2 = Dense(6, 4, lrelu)
+        #self.dense3 = Dense(9, 4, relu)
         self.out = Dense(4, 2, tanh)
         self.randomize(self.auto.world.learning_rate)
         self.history = []
@@ -87,7 +87,7 @@ class AutoBrain:
         _input = np.array(_input)
         output = self.dense1.call(_input)
         output = self.dense2.call(output)
-        output = self.dense3.call(output)
+        #output = self.dense3.call(output)
         output = self.out.call(output)
         return output
 
@@ -99,9 +99,9 @@ class AutoBrain:
         if random.getrandbits(1):
             self.dense2.setRandomWeights(amt)
             self.dense2.setRandomBiases(amt)
-        if random.getrandbits(1):
-            self.dense3.setRandomWeights(amt)
-            self.dense3.setRandomBiases(amt)
+        #if random.getrandbits(1):
+        #    self.dense3.setRandomWeights(amt)
+        #    self.dense3.setRandomBiases(amt)
         if random.getrandbits(1):
             self.out.setRandomWeights(amt)
             self.out.setRandomBiases(amt)
@@ -112,14 +112,14 @@ class AutoBrain:
         self.dense1.bias += parent.dense1.bias
         self.dense2.weights += parent.dense2.weights
         self.dense2.bias += parent.dense2.bias
-        self.dense3.weights += parent.dense3.weights
-        self.dense3.bias += parent.dense3.bias
+        #self.dense3.weights += parent.dense3.weights
+        #self.dense3.bias += parent.dense3.bias
         self.out.weights += parent.out.weights
         self.out.bias += parent.out.bias * amt
 
     def draw(self, bounding_rect):
-        layers = [self.dense1, self.dense2, self.dense3, self.out]
-        # layers = [self.dense1, self.dense2, self.out]
+        #layers = [self.dense1, self.dense2, self.dense3, self.out]
+        layers = [self.dense1, self.dense2, self.out]
         width = bounding_rect.size.x / (len(layers) + 1)
         last_layer = []
         height = bounding_rect.size.y / len(self.input)
@@ -128,11 +128,19 @@ class AutoBrain:
 
         #KERU virtual joystic graph
         graph = []
-        graph.append(Circle(50, (0,0),(255,255,255)))
-        graph.append(Circle(10, ((layers[3].output[1]) * 50, (- layers[3].output[0]) * 50),(0,0,0)))
+        out_layer_i = len(layers) - 1
+        graph.append(Circle(50, (0,0),(200,200,200)))
+        graph.append(Line((-50,0),(50,0),(0,0,0),0))
+        graph.append(Line((0,-50),(0,50),(0,0,0),0))
+        graph.append(Circle(10, ((layers[out_layer_i].output[1]) * 50, (- layers[out_layer_i].output[0]) * 50),(50,50,50)))
         self.auto.world.viewer.draw(graph)
-        self.history.append(Circle(3, ((layers[3].output[1]) * 50, (- layers[3].output[0]) * 50),(200,0,0)))
+        self.history.append(Circle(2, ((layers[out_layer_i].output[1]) * 50, (- layers[out_layer_i].output[0]) * 50),(170,0,0)))
         self.auto.world.viewer.draw(self.history)
+
+        # KERU add speed
+        self.auto.world.viewer.draw([Line((-70,50),(-70,50 - self.input[7]),(0,0,200),10)])
+        # KERU add lat vel
+        self.auto.world.viewer.draw([Line((-62,70),(-60 + self.input[8], 70),(200,200,0),10)])
 
         for _input in self.input:
             activation = max(min((_input / 100), 1), 0)
@@ -199,7 +207,7 @@ class Car(PhysicsEntity):
         self.c_tf = 10  # tyre friction coef
 
         self.breakingForce = 300000  # KERU original is 100000
-        self.engineForce = 700000  # KERU : original is 350000
+        self.engineForce = 1400000  # KERU : original is 350000
         self.accelerating = 0
         self.breaking = 0
         self.turning = 0
@@ -449,9 +457,9 @@ class Auto(RaceCar):
     def getInputs(self) -> []:
         max_dis = 2000
         angles = [-90, -45, -20, 0, 20, 45, 90]
-        for i, a in enumerate(angles):  # KERU add some noise
-            #a += random.random() * 5 - 0.5
-            angles[i] = a
+        #for i, a in enumerate(angles):  # KERU add some noise
+        #    a += random.random() * 2 - 0.5
+        #    angles[i] = a
         #print(angles)
         self.inputs = []
         inputs = []

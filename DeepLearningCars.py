@@ -16,7 +16,7 @@ import pyglet
 reset_timer = 30000  # reset the track after n ms
 num_car = 50  # how many car to spawn
 LEARNING_RATE = 0.1
-LEARNING_RATE_DEC = 0.002
+LEARNING_RATE_DEC = 0.001
 LEARNING_RATE_MIN = 0.05
 graph = []
 
@@ -79,7 +79,7 @@ class AutoSimulation:
 
     def start(self):
         # self.slow_car_removed = False
-        d = 1.0 - (1.0 / ((self.generation / 5.0) + 1.0))
+        d = 1.0 - (1.0 / ((self.generation / 10.0) + 1.0))
         self.generateTrack(d)
         self.text = Text("Generation : " + str(self.generation))
         self.start_time = pygame.time.get_ticks()
@@ -132,8 +132,8 @@ class AutoSimulation:
         # count car that are still running and send them for the next run as-is
         running_car_count = 0
         for running_auto in self.autos:
-            if running_auto.stop == 0:
-                running_car_count = running_car_count + 1
+            if running_auto.stop == 0 and running_car_count < num_car:
+                running_car_count += 1
                 # make slightly less mutated child
                 new_batch.append(running_auto.makeChild(self.learning_rate / 10))
         # graph.append(running_car_count)

@@ -63,7 +63,7 @@ class RaceTrack:
                 d.set(point)
                 d.sub(p)
                 d = d.getMag()
-                if d < 80:
+                if d < 80:  # was 80
                     break
             if d > 80:
                 track_outer.points.append(point)
