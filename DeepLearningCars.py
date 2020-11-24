@@ -9,8 +9,8 @@ from primitives import *
 from track import RaceTrack
 from viewer import TargetViewer
 
-import matplotlib.pyplot as plt
-import pyglet
+#import matplotlib.pyplot as plt
+#import pyglet
 
 
 reset_timer = 30000  # reset the track after n ms
