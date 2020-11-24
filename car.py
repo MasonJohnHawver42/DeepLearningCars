@@ -5,6 +5,14 @@ import random
 from physic import PhysicsEntity
 from primitives import *
 
+def logistic(r, x):
+    return r * x * (1 - x)
+
+def logi(r):
+    x = .6
+    for _ in range(random.randrange(10,20)):
+            x = r * x * (1 - x)
+    return x
 
 def lrelu(val):
     return val * 0.01 if val < 0 else val
@@ -36,7 +44,7 @@ class Dense:
         output = [_input[i] * self.weights[i] for i in range(len(self.weights))]
         output += self.bias
         output = [sum(output[:, i]) for i in range(len(self.weights[0]))]
-        output = [self.activation(val) for val in output]  # <- 2.9% on <listcomp>, it's fine.
+        output = [self.activation(val) for val in output]
         self.output = output
         return output
 
@@ -64,7 +72,7 @@ class AutoBrain:
         self.auto = auto
         self.num_input = 9
         self.input = []
-        self.dense1 = Dense(self.num_input, self.num_input, lrelu)  # testing leaky relu
+        self.dense1 = Dense(self.num_input, self.num_input, logi)  # testing logistic map
         self.dense2 = Dense(self.num_input, self.num_input // 2, relu)
         # self.dense3 = Dense(4, 3, relu)
         self.out = Dense(self.num_input // 2, 2, tanh)
