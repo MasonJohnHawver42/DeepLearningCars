@@ -10,6 +10,8 @@ from track import RaceTrack
 from viewer import TargetViewer
 
 import matplotlib.pyplot as plt
+import pyglet
+
 
 reset_timer = 30000  # reset the track after n ms
 num_car = 50  # how many car to spawn
@@ -103,7 +105,8 @@ class AutoSimulation:
         self.mouse.update()
 
         if not self.top_auto.stop:
-            self.viewer.updatePos(self.top_auto.body.pos)
+            # self.viewer.updatePos(self.top_auto.body.pos)
+            self.viewer.updatePos(None) # KERU fix the view at the center
         if pygame.time.get_ticks() - self.start_time > reset_timer:
             print("Maximum time reached")
             self.reset()

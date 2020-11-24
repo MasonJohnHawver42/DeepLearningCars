@@ -76,10 +76,11 @@ class AutoBrain:
         self.num_input = 9
         self.input = []
         self.dense1 = Dense(self.num_input, 6, relu)  # testing logistic map
-        self.dense2 = Dense(6, 9, logi)
+        self.dense2 = Dense(6, 9, lrelu)
         self.dense3 = Dense(9, 4, relu)
         self.out = Dense(4, 2, tanh)
         self.randomize(self.auto.world.learning_rate)
+        self.history = []
 
     def call(self, _input):
         self.input = _input
@@ -125,7 +126,13 @@ class AutoBrain:
         pos = Vector()
         pos.set(bounding_rect.pos)
 
-        # size = self.num_input
+        #KERU virtual joystic graph
+        graph = []
+        graph.append(Circle(50, (0,0),(255,255,255)))
+        graph.append(Circle(10, ((layers[3].output[1]) * 50, (- layers[3].output[0]) * 50),(0,0,0)))
+        self.auto.world.viewer.draw(graph)
+        self.history.append(Circle(3, ((layers[3].output[1]) * 50, (- layers[3].output[0]) * 50),(200,0,0)))
+        self.auto.world.viewer.draw(self.history)
 
         for _input in self.input:
             activation = max(min((_input / 100), 1), 0)
@@ -135,6 +142,7 @@ class AutoBrain:
             self.auto.world.viewer.draw([unit])
             pos.add((0, height))
             last_layer.append(unit)
+
 
         for i, layer in enumerate(layers):
             if len(layer.output) > 0:
@@ -170,6 +178,7 @@ class AutoBrain:
                 self.auto.world.viewer.draw(conns)
                 self.auto.world.viewer.draw(last_layer)
                 last_layer = units
+
 
         self.auto.world.viewer.draw(last_layer)
 
@@ -441,7 +450,7 @@ class Auto(RaceCar):
         max_dis = 2000
         angles = [-90, -45, -20, 0, 20, 45, 90]
         for i, a in enumerate(angles):  # KERU add some noise
-            a += random.random() * 5 - 0.5
+            #a += random.random() * 5 - 0.5
             angles[i] = a
         #print(angles)
         self.inputs = []
