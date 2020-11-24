@@ -5,14 +5,17 @@ import random
 from physic import PhysicsEntity
 from primitives import *
 
+
 def logistic(r, x):
     return r * x * (1 - x)
 
+
 def logi(r):
     x = .6
-    for _ in range(random.randrange(10,20)):
-            x = r * x * (1 - x)
+    for _ in range(random.randrange(20,40)):
+        x = r * x * (1 - x)
     return x
+
 
 def lrelu(val):
     return val * 0.01 if val < 0 else val
@@ -72,10 +75,10 @@ class AutoBrain:
         self.auto = auto
         self.num_input = 9
         self.input = []
-        self.dense1 = Dense(self.num_input, self.num_input, logi)  # testing logistic map
-        self.dense2 = Dense(self.num_input, self.num_input // 2, relu)
-        # self.dense3 = Dense(4, 3, relu)
-        self.out = Dense(self.num_input // 2, 2, tanh)
+        self.dense1 = Dense(self.num_input, 6, relu)  # testing logistic map
+        self.dense2 = Dense(6, 9, logi)
+        self.dense3 = Dense(9, 4, relu)
+        self.out = Dense(4, 2, tanh)
         self.randomize(self.auto.world.learning_rate)
 
     def call(self, _input):
@@ -83,7 +86,7 @@ class AutoBrain:
         _input = np.array(_input)
         output = self.dense1.call(_input)
         output = self.dense2.call(output)
-        # output = self.dense3.call(output)
+        output = self.dense3.call(output)
         output = self.out.call(output)
         return output
 
@@ -95,9 +98,9 @@ class AutoBrain:
         if random.getrandbits(1):
             self.dense2.setRandomWeights(amt)
             self.dense2.setRandomBiases(amt)
-        # if random.getrandbits(1):
-        # self.dense3.setRandomWeights(amt)
-        # self.dense3.setRandomBiases(amt)
+        if random.getrandbits(1):
+            self.dense3.setRandomWeights(amt)
+            self.dense3.setRandomBiases(amt)
         if random.getrandbits(1):
             self.out.setRandomWeights(amt)
             self.out.setRandomBiases(amt)
@@ -108,14 +111,14 @@ class AutoBrain:
         self.dense1.bias += parent.dense1.bias
         self.dense2.weights += parent.dense2.weights
         self.dense2.bias += parent.dense2.bias
-        # self.dense3.weights += parent.dense3.weights
-        # self.dense3.bias += parent.dense3.bias
+        self.dense3.weights += parent.dense3.weights
+        self.dense3.bias += parent.dense3.bias
         self.out.weights += parent.out.weights
         self.out.bias += parent.out.bias * amt
 
     def draw(self, bounding_rect):
-        # layers = [self.dense1, self.dense2, self.dense3, self.out]
-        layers = [self.dense1, self.dense2, self.out]
+        layers = [self.dense1, self.dense2, self.dense3, self.out]
+        # layers = [self.dense1, self.dense2, self.out]
         width = bounding_rect.size.x / (len(layers) + 1)
         last_layer = []
         height = bounding_rect.size.y / len(self.input)
@@ -437,6 +440,10 @@ class Auto(RaceCar):
     def getInputs(self) -> []:
         max_dis = 2000
         angles = [-90, -45, -20, 0, 20, 45, 90]
+        for i, a in enumerate(angles):  # KERU add some noise
+            a += random.random() * 5 - 0.5
+            angles[i] = a
+        #print(angles)
         self.inputs = []
         inputs = []
 
