@@ -9,11 +9,14 @@ from primitives import *
 from track import RaceTrack
 from viewer import TargetViewer
 
+import matplotlib.pyplot as plt
+
 reset_timer = 30000  # reset the track after n ms
 num_car = 50  # how many car to spawn
 LEARNING_RATE = 0.1
 LEARNING_RATE_DEC = 0.002
 LEARNING_RATE_MIN = 0.05
+graph = []
 
 pygame.init()
 
@@ -130,7 +133,7 @@ class AutoSimulation:
                 running_car_count = running_car_count + 1
                 # make slightly less mutated child
                 new_batch.append(running_auto.makeChild(self.learning_rate / 10))
-
+        # graph.append(running_car_count)
         print("running cars : ", running_car_count)
 
         # complete the list with mutated child of the top auto
