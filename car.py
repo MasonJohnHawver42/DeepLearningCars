@@ -130,8 +130,8 @@ class AutoBrain:
         graph = []
         out_layer_i = len(layers) - 1
         graph.append(Circle(50, (0,0),(200,200,200)))
-        graph.append(Line((-50,0),(50,0),(0,0,0),0))
-        graph.append(Line((0,-50),(0,50),(0,0,0),0))
+        graph.append(Line((-50,0),(50,0),(0,0,0),1))
+        graph.append(Line((0,-50),(0,50),(0,0,0),1))
         graph.append(Circle(10, ((layers[out_layer_i].output[1]) * 50, (- layers[out_layer_i].output[0]) * 50),(50,50,50)))
         self.auto.world.viewer.draw(graph)
         self.history.append(Circle(2, ((layers[out_layer_i].output[1]) * 50, (- layers[out_layer_i].output[0]) * 50),(170,0,0)))
@@ -177,7 +177,7 @@ class AutoBrain:
                         activation = max(min(((abs(layer.weights[k][j])) / .2), 1), 0)
                         w = int(activation)  # KERU was 3 * activation + 1
                         # conn = Line(lunit.pos, unit.pos, (0, 0, 0), w)
-                        conn = Line(lunit.pos, unit.pos, (activation * 128, activation, activation), w)
+                        conn = Line(lunit.pos, unit.pos, (activation * 128, activation, activation), w + 1)
                         conns.append(conn)
                         # self.auto.world.viewer.draw([conn])
 
@@ -508,7 +508,7 @@ class Auto(RaceCar):
             # Show the ray and circle of the "lidar" input sensor
             if self.top or 0:
                 self.inputs.append(Circle(3, col, (0,0,120)))
-                self.inputs.append(Line(start, col, (0,0,120), width=0))
+                self.inputs.append(Line(start, col, (0,0,120), width=1))
 
             dis = start.getDis(col)
             inputs.append(dis)

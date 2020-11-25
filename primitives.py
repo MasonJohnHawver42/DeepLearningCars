@@ -67,7 +67,7 @@ class Line:
     def draw(self, display):
         pygame.draw.line(display, self.color,
                          [int(self.start.x), int(self.start.y)],
-                         [int(self.end.x), int(self.end.y)], self.width * 2 + 1)
+                         [int(self.end.x), int(self.end.y)], self.width)
 
 
 class Text:

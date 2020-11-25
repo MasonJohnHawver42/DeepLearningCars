@@ -14,7 +14,7 @@ from viewer import TargetViewer
 
 
 reset_timer = 30000  # reset the track after n ms
-num_car = 50  # how many car to spawn
+num_car = 150  # how many car to spawn
 LEARNING_RATE = 0.1
 LEARNING_RATE_DEC = 0.001
 LEARNING_RATE_MIN = 0.05
@@ -158,7 +158,7 @@ class AutoSimulation:
         self.top_auto.brain.draw(Rect((300, 200), (self.viewer.pos.x + 15, self.viewer.pos.y + 5)))
         self.track.draw()
         self.mouse.draw()
-        self.text.draw(self.viewer.display)
+        #self.text.draw(self.viewer.display)
         self.viewer.draw(self.top_auto.inputs)     #enable to see sensor
         self.viewer.render()
         self.viewer.clear()
