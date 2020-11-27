@@ -41,14 +41,18 @@ class Dense:
     # TODO: optimize this ! (23% cpu) (17% without numpy)
     def call(self, _input):
         # numpy may be efficient for a large number of neuron
-        # output = np.array([_input[i] * self.weights[i] for i in range(len(self.weights))]) # <- 4.5% on <listcomp>
-        # output += self.bias
-        # output = np.array([np.sum(output[:, i]) for i in range(len(self.weights[0]))]) # slowest (11% total)
-        # output = np.array([self.activation(val) for val in output]) # <- 2.9% on <listcomp>, it's fine.
-        output = [_input[i] * self.weights[i] for i in range(len(self.weights))]
-        output += self.bias
-        output = [sum(output[:, i]) for i in range(len(self.weights[0]))]
-        output = [self.activation(val) for val in output]
+        #output = np.array([_input[i] * self.weights[i] for i in range(len(self.weights))]) # <- 4.5% on <listcomp>
+        #output = np.multiply(_input[:,None], self.weights)
+        #output += self.bias
+        #output = np.array([self.activation(val) for val in output]) # <- 2.9% on <listcomp>, it's fine.
+        #output = np.array([np.sum(output[:, i]) for i in range(len(self.weights[0]))]) # slowest (11% total)
+        #output = np.sum(output[:,None]) # slowest (11% total)
+#        output = [_input[i] * self.weights[i] for i in range(len(self.weights))]
+#        output += self.bias
+#        output = [sum(output[:, i]) for i in range(len(self.weights[0]))]
+#        output = [self.activation(val) for val in output]
+        output = np.sum(_input[:,None] * self.weights + self.bias, axis=0)
+        output = np.fromiter((self.activation(val) for val in output), dtype=np.single)
         self.output = output
         return output
 
@@ -76,8 +80,8 @@ class AutoBrain:
         self.auto = auto
         self.num_input = 9
         self.input = []
-        self.dense1 = Dense(self.num_input, 6, relu)  # testing logistic map
-        self.dense2 = Dense(6, 4, lrelu)
+        self.dense1 = Dense(self.num_input, 9, relu)  # testing logistic map
+        self.dense2 = Dense(9, 4, lrelu)
         #self.dense3 = Dense(9, 4, relu)
         self.out = Dense(4, 2, tanh)
         self.randomize(self.auto.world.learning_rate)
