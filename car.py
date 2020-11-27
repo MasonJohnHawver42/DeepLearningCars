@@ -40,6 +40,7 @@ class Dense:
 
     # TODO: optimize this ! (23% cpu) (17% without numpy)
     def call(self, _input):
+        # numpy may be efficient for a large number of neuron
         # output = np.array([_input[i] * self.weights[i] for i in range(len(self.weights))]) # <- 4.5% on <listcomp>
         # output += self.bias
         # output = np.array([np.sum(output[:, i]) for i in range(len(self.weights[0]))]) # slowest (11% total)
@@ -151,7 +152,6 @@ class AutoBrain:
             pos.add((0, height))
             last_layer.append(unit)
 
-
         for i, layer in enumerate(layers):
             if len(layer.output) > 0:
                 height = bounding_rect.size.y / len(layer.output)
@@ -170,7 +170,6 @@ class AutoBrain:
                     color = int(activation * 255)
                     unit = Circle(5, pos, (color, color, color))
                     unit.pos.add((0, height / 2.0))
-                    # self.auto.world.viewer.draw([unit])
                     pos.add((0, height))
 
                     for k, lunit in enumerate(last_layer):
@@ -179,7 +178,6 @@ class AutoBrain:
                         # conn = Line(lunit.pos, unit.pos, (0, 0, 0), w)
                         conn = Line(lunit.pos, unit.pos, (activation * 128, activation, activation), w + 1)
                         conns.append(conn)
-                        # self.auto.world.viewer.draw([conn])
 
                     units.append(unit)
 
@@ -233,14 +231,11 @@ class Car(PhysicsEntity):
             self.applyForce(rr)
 
         """ apply lateral friction"""
-        # ms = 250
-        # self.c_tf = max(3, (((15 - 5) / (100 - ms)) * (self.vel.getMag() - ms)) + 3)
-
         line = -1 * self.c_tf * self.mass
         lateral = self.body.getMidPoint().getReciprocal()
         lat_vel = lateral.getProjection(self.vel)
         lat_vel.mult((line, line))
-        self.lat_vel = lat_vel  # KERU add, lateral velocity as input
+        self.lat_vel = lat_vel  # useful to add lat_vel as neuron input
         self.applyForce(lat_vel)
 
     def applyBreakingForce(self, amt=1):
@@ -358,7 +353,6 @@ class RaceCar(Car):
 
     def start(self):
         ct = self.world.track.tracks[self.current_track]
-        # ct.activate()
         self.pos.set(ct.getCenter())
 
         orientation = Vector()
@@ -382,7 +376,6 @@ class RaceCar(Car):
 
     def updateCurrentTrack(self):
         ct = self.world.track.tracks[self.current_track]
-        # ct.activate()
 
         if self.colliding(ct.next_track.gate):
             self.nextGate()
@@ -475,10 +468,8 @@ class Auto(RaceCar):
             col = None
             i = 0
 
-            cols = []
-
             while i < len(self.world.track.tracks) and col is None:
-                cols = []  # should it be here ?
+                cols = []
                 min_dis = None
                 col = None
                 index = math.ceil(i / 2.0) * (((i % 2) * 2) - 1)
@@ -498,15 +489,15 @@ class Auto(RaceCar):
 
                 i += 1
 
-            if pygame.time.get_ticks() - self.start_time > 2000:
-                if not cols:  # same as if len(cols) == 0
-                    self.stop = 1  # KERU collision fix
+#            if pygame.time.get_ticks() - self.start_time > 2000:
+#                if not cols:  # same as if len(cols) == 0
+#                    self.stop = 1  # KERU collision fix
 
             if col is None:
                 col = end
 
             # Show the ray and circle of the "lidar" input sensor
-            if self.top or 0:
+            if self.top:
                 self.inputs.append(Circle(3, col, (0,0,120)))
                 self.inputs.append(Line(start, col, (0,0,120), width=1))
 
@@ -523,8 +514,8 @@ class Auto(RaceCar):
 
     def act(self):
         _input = self.getInputs()
-        _input.append(self.vel.getMag() / 20)  # add speed as input
-        _input.append(self.lat_vel.getMag() / 15000)  # add lateral velocity as input
+        _input.append(self.vel.getMag() / 20)           # add speed as input
+        _input.append(self.lat_vel.getMag() / 15000)    # add lateral velocity as input
         self.getOutput(_input)
         self.applyBreakingForce(self.break_amt)
         self.applyEngineForce(self.engine_amt)

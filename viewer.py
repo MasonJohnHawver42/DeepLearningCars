@@ -71,7 +71,6 @@ class TargetViewer(Viewer):
             vel = Vector()
             vel.set(self.target)
             vel.sub(self.pos)
-            # vel.limitMag(self.speed)
             vel.mult((self.world.dt, self.world.dt))
             vel.mult((self.speed, self.speed))
             self.pos.add(vel)

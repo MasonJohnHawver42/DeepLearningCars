@@ -9,9 +9,6 @@ from primitives import *
 from track import RaceTrack
 from viewer import TargetViewer
 
-#import matplotlib.pyplot as plt
-#import pyglet
-
 
 reset_timer = 30000  # reset the track after n ms
 num_car = 150  # how many car to spawn
@@ -78,7 +75,6 @@ class AutoSimulation:
         self.top_auto = top_auto
 
     def start(self):
-        # self.slow_car_removed = False
         d = 1.0 - (1.0 / ((self.generation / 10.0) + 1.0))
         self.generateTrack(d)
         self.text = Text("Generation : " + str(self.generation))
@@ -93,22 +89,16 @@ class AutoSimulation:
                 if (not self.slow_car_removed) and ((pygame.time.get_ticks() - self.start_time) > 5000):
                     """remove slow car after N ms"""
                     if car.vel.getMag() < 10:
-                        # print("removing car ", car.vel.getMag())
                         car.stop = 1
-
-        # if (not self.slow_car_removed) and ((pygame.time.get_ticks() - self.start_time) > 5000):
-        #    """Slow car removed"""
-        #    print("Slow var removed")
-        #    self.slow_car_removed = True
 
         self.getFittestAuto()
         self.mouse.update()
 
-        if not self.top_auto.stop:
-            # self.viewer.updatePos(self.top_auto.body.pos)
-            self.viewer.updatePos(None) # KERU fix the view at the center
+        #if not self.top_auto.stop:
+        #    self.viewer.updatePos(self.top_auto.body.pos)
+        #    self.viewer.updatePos(None)     # KERU fix the view at the center
+
         if pygame.time.get_ticks() - self.start_time > reset_timer:
-            print("Maximum time reached")
             self.reset()
 
     def cont(self):
@@ -119,7 +109,6 @@ class AutoSimulation:
         return 1 - all_stopped
 
     def end(self):
-        # global LEARNING_RATE_DEC, LEARNING_RATE_MIN
         new_batch = []
 
         # update the learning rate
@@ -136,7 +125,6 @@ class AutoSimulation:
                 running_car_count += 1
                 # make slightly less mutated child
                 new_batch.append(running_auto.makeChild(self.learning_rate / 10))
-        # graph.append(running_car_count)
         print("running cars : ", running_car_count)
 
         # complete the list with mutated child of the top auto
@@ -151,14 +139,14 @@ class AutoSimulation:
 
     def render(self):
         for car in self.autos:
-            if not car.stop:
-                car.draw()  # only draw car that are still running
+            if not car.stop:    # only draw car that are still running
+                car.draw()
 
         self.top_auto.draw()
         self.top_auto.brain.draw(Rect((300, 200), (self.viewer.pos.x + 15, self.viewer.pos.y + 5)))
         self.track.draw()
         self.mouse.draw()
-        #self.text.draw(self.viewer.display)
+        self.text.draw(self.viewer.display)
         self.viewer.draw(self.top_auto.inputs)     #enable to see sensor
         self.viewer.render()
         self.viewer.clear()
@@ -171,14 +159,13 @@ class AutoSimulation:
 class Game:
     def __init__(self, world=AutoSimulation()):
         self.world = world
-        self.fps = 60
+        self.fps = 30
         self.running = 1
         self.t = timeit.default_timer()
 
     def update(self):
         self.world.events = pygame.event.get()
         self.world.dt = 1 / 120  # make the physic run at a "simulated" 120fps
-        # self.world.dt = (timeit.default_timer() - self.t)  # make simulation dependent of framerate
         self.world.update()
         self.t = timeit.default_timer()
 
@@ -215,6 +202,4 @@ def main():
     while g.running:
         g.play()
 
-
-# dis.dis(Line.getSlope)
 main()
