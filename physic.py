@@ -15,9 +15,9 @@ class PhysicsEntity:
     def applyForce(self, f=(0, 0)):
         self.acc.add((f[0] / self.mass, f[1] / self.mass))
 
-    def applyFriction(self, f=.1):
-        f = pow(1 - f, self.world.dt)
-        self.vel.mult((f, f))
+#    def applyFriction(self, f=.1):
+#        f = pow(1 - f, self.world.dt)
+#        self.vel.mult((f, f))
 
     def applyVel(self):
         v = Vector()
@@ -32,6 +32,6 @@ class PhysicsEntity:
         self.vel.add(a)
         self.acc.mult((0, 0))
 
-    def update(self):
-        self.applyAcc()
-        self.applyVel()
+ #   def update(self):
+ #       self.applyAcc()
+ #       self.applyVel()

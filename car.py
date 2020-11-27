@@ -12,7 +12,7 @@ def logistic(r, x):
 
 def logi(r):
     x = .6
-    for _ in range(random.randrange(20,40)):
+    for _ in range(random.randrange(20, 40)):
         x = r * x * (1 - x)
     return x
 
@@ -31,8 +31,8 @@ def tanh(val):
 
 class Dense:
     def __init__(self, input_size, output_size, activation):
-        self.weights = np.zeros((input_size, output_size))
-        self.bias = np.zeros(output_size)
+        self.weights = np.zeros((input_size, output_size), dtype=np.single)
+        self.bias = np.zeros(output_size, dtype=np.single)
         # self.weights = np.random.random((input_size, output_size))
         # self.bias = np.random.random(output_size)
         self.output = []
@@ -41,17 +41,17 @@ class Dense:
     # TODO: optimize this ! (23% cpu) (17% without numpy)
     def call(self, _input):
         # numpy may be efficient for a large number of neuron
-        #output = np.array([_input[i] * self.weights[i] for i in range(len(self.weights))]) # <- 4.5% on <listcomp>
-        #output = np.multiply(_input[:,None], self.weights)
-        #output += self.bias
-        #output = np.array([self.activation(val) for val in output]) # <- 2.9% on <listcomp>, it's fine.
-        #output = np.array([np.sum(output[:, i]) for i in range(len(self.weights[0]))]) # slowest (11% total)
-        #output = np.sum(output[:,None]) # slowest (11% total)
-#        output = [_input[i] * self.weights[i] for i in range(len(self.weights))]
-#        output += self.bias
-#        output = [sum(output[:, i]) for i in range(len(self.weights[0]))]
-#        output = [self.activation(val) for val in output]
-        output = np.sum(_input[:,None] * self.weights + self.bias, axis=0)
+        # output = np.array([_input[i] * self.weights[i] for i in range(len(self.weights))]) # <- 4.5% on <listcomp>
+        # output = np.multiply(_input[:,None], self.weights)
+        # output += self.bias
+        # output = np.array([self.activation(val) for val in output]) # <- 2.9% on <listcomp>, it's fine.
+        # output = np.array([np.sum(output[:, i]) for i in range(len(self.weights[0]))]) # slowest (11% total)
+        # output = np.sum(output[:,None]) # slowest (11% total)
+        #        output = [_input[i] * self.weights[i] for i in range(len(self.weights))]
+        #        output += self.bias
+        #        output = [sum(output[:, i]) for i in range(len(self.weights[0]))]
+        #        output = [self.activation(val) for val in output]
+        output = np.sum(_input[:, None] * self.weights + self.bias, axis=0)
         output = np.fromiter((self.activation(val) for val in output), dtype=np.single)
         self.output = output
         return output
@@ -82,7 +82,7 @@ class AutoBrain:
         self.input = []
         self.dense1 = Dense(self.num_input, 9, relu)  # testing logistic map
         self.dense2 = Dense(9, 4, lrelu)
-        #self.dense3 = Dense(9, 4, relu)
+        # self.dense3 = Dense(9, 4, relu)
         self.out = Dense(4, 2, tanh)
         self.randomize(self.auto.world.learning_rate)
         self.history = []
@@ -92,7 +92,7 @@ class AutoBrain:
         _input = np.array(_input)
         output = self.dense1.call(_input)
         output = self.dense2.call(output)
-        #output = self.dense3.call(output)
+        # output = self.dense3.call(output)
         output = self.out.call(output)
         return output
 
@@ -104,7 +104,7 @@ class AutoBrain:
         if random.getrandbits(1):
             self.dense2.setRandomWeights(amt)
             self.dense2.setRandomBiases(amt)
-        #if random.getrandbits(1):
+        # if random.getrandbits(1):
         #    self.dense3.setRandomWeights(amt)
         #    self.dense3.setRandomBiases(amt)
         if random.getrandbits(1):
@@ -117,13 +117,13 @@ class AutoBrain:
         self.dense1.bias += parent.dense1.bias
         self.dense2.weights += parent.dense2.weights
         self.dense2.bias += parent.dense2.bias
-        #self.dense3.weights += parent.dense3.weights
-        #self.dense3.bias += parent.dense3.bias
+        # self.dense3.weights += parent.dense3.weights
+        # self.dense3.bias += parent.dense3.bias
         self.out.weights += parent.out.weights
         self.out.bias += parent.out.bias * amt
 
     def draw(self, bounding_rect):
-        #layers = [self.dense1, self.dense2, self.dense3, self.out]
+        # layers = [self.dense1, self.dense2, self.dense3, self.out]
         layers = [self.dense1, self.dense2, self.out]
         width = bounding_rect.size.x / (len(layers) + 1)
         last_layer = []
@@ -131,21 +131,23 @@ class AutoBrain:
         pos = Vector()
         pos.set(bounding_rect.pos)
 
-        #KERU virtual joystic graph
+        # KERU virtual joystick graph
         graph = []
         out_layer_i = len(layers) - 1
-        graph.append(Circle(50, (0,0),(200,200,200)))
-        graph.append(Line((-50,0),(50,0),(0,0,0),1))
-        graph.append(Line((0,-50),(0,50),(0,0,0),1))
-        graph.append(Circle(10, ((layers[out_layer_i].output[1]) * 50, (- layers[out_layer_i].output[0]) * 50),(50,50,50)))
+        graph.append(Circle(50, (0, 0), (200, 200, 200)))
+        graph.append(Line((-50, 0), (50, 0), (0, 0, 0), 1))
+        graph.append(Line((0, -50), (0, 50), (0, 0, 0), 1))
+        graph.append(
+            Circle(10, ((layers[out_layer_i].output[1]) * 50, (- layers[out_layer_i].output[0]) * 50), (50, 50, 50)))
         self.auto.world.viewer.draw(graph)
-        self.history.append(Circle(2, ((layers[out_layer_i].output[1]) * 50, (- layers[out_layer_i].output[0]) * 50),(170,0,0)))
+        self.history.append(
+            Circle(2, ((layers[out_layer_i].output[1]) * 50, (- layers[out_layer_i].output[0]) * 50), (170, 0, 0)))
         self.auto.world.viewer.draw(self.history)
 
         # KERU add speed
-        self.auto.world.viewer.draw([Line((-70,50),(-70,50 - self.input[7]),(0,0,200),10)])
+        self.auto.world.viewer.draw([Line((-70, 50), (-70, 50 - self.input[7]), (0, 0, 200), 10)])
         # KERU add lat vel
-        self.auto.world.viewer.draw([Line((-62,70),(-60 + self.input[8], 70),(200,200,0),10)])
+        self.auto.world.viewer.draw([Line((-62, 70), (-60 + self.input[8], 70), (200, 200, 0), 10)])
 
         for _input in self.input:
             activation = max(min((_input / 100), 1), 0)
@@ -188,7 +190,6 @@ class AutoBrain:
                 self.auto.world.viewer.draw(conns)
                 self.auto.world.viewer.draw(last_layer)
                 last_layer = units
-
 
         self.auto.world.viewer.draw(last_layer)
 
@@ -328,7 +329,6 @@ class Car(PhysicsEntity):
             _line.shift((self.body.pos.x * -1, self.body.pos.y * -1))
             if _line.getLineIntercept(line) is not None:
                 return 1
-
         return 0
 
     def update(self):
@@ -454,10 +454,10 @@ class Auto(RaceCar):
     def getInputs(self) -> []:
         max_dis = 2000
         angles = [-90, -45, -20, 0, 20, 45, 90]
-        #for i, a in enumerate(angles):  # KERU add some noise
+        # for i, a in enumerate(angles):  # KERU add some noise
         #    a += random.random() * 2 - 0.5
         #    angles[i] = a
-        #print(angles)
+        # print(angles)
         self.inputs = []
         inputs = []
 
@@ -493,17 +493,17 @@ class Auto(RaceCar):
 
                 i += 1
 
-#            if pygame.time.get_ticks() - self.start_time > 2000:
-#                if not cols:  # same as if len(cols) == 0
-#                    self.stop = 1  # KERU collision fix
+            #            if pygame.time.get_ticks() - self.start_time > 2000:
+            #                if not cols:  # same as if len(cols) == 0
+            #                    self.stop = 1  # KERU collision fix
 
             if col is None:
                 col = end
 
             # Show the ray and circle of the "lidar" input sensor
             if self.top:
-                self.inputs.append(Circle(3, col, (0,0,120)))
-                self.inputs.append(Line(start, col, (0,0,120), width=1))
+                self.inputs.append(Circle(3, col, (0, 0, 120)))
+                self.inputs.append(Line(start, col, (0, 0, 120), width=1))
 
             dis = start.getDis(col)
             inputs.append(dis)
@@ -518,8 +518,8 @@ class Auto(RaceCar):
 
     def act(self):
         _input = self.getInputs()
-        _input.append(self.vel.getMag() / 20)           # add speed as input
-        _input.append(self.lat_vel.getMag() / 15000)    # add lateral velocity as input
+        _input.append(self.vel.getMag() / 20)  # add speed as input
+        _input.append(self.lat_vel.getMag() / 15000)  # add lateral velocity as input
         self.getOutput(_input)
         self.applyBreakingForce(self.break_amt)
         self.applyEngineForce(self.engine_amt)

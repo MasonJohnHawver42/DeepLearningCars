@@ -22,7 +22,8 @@ class Line:
     def getIntercept(self):
         try:
             return self.start.y - (((self.start.y - self.end.y) / (self.start.x - self.end.x)) * self.start.x)
-        except ZeroDivisionError:
+        except ZeroDivisionError as e:
+            print("Divide by zero : ", e)
             return None
 
     def inDomain(self, x):
