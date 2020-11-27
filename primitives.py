@@ -29,20 +29,29 @@ class Line:
     def inDomain(self, x):
         return min(self.start.x, self.end.x) < x < max(self.start.x, self.end.x)
 
-    # TODO: optimize this ! (14% CPU time)
+    # TODO: optimize this ! (also know as : the absurd cost of function call)
     def getLineIntercept(self, line):
-        m1 = self.getSlope()
-        b1 = self.getIntercept()
+        m1 = self.getSlope()        # (self.start.y - self.end.y) / (self.start.x - self.end.x)
+        b1 = self.getIntercept()    # self.start.y - (((self.start.y - self.end.y) / (self.start.x - self.end.x)) * self.start.x)
         m2 = line.getSlope()
         b2 = line.getIntercept()
+        #m1 = (self.start.y - self.end.y) / (self.start.x - self.end.x)
+        #b1 = self.start.y - (((self.start.y - self.end.y) / (self.start.x - self.end.x)) * self.start.x)
+        #m2 = (line.start.y - line.end.y) / (line.start.x - line.end.x)
+        #b2 = line.start.y - (((line.start.y - line.end.y) / (line.start.x - line.end.x)) * line.start.x)
 
         try:
-            xi = (b2 - b1) / (m1 - m2)
+             xi = (b2 - b1) / (m1 - m2)
+            #xi = ((line.start.y - (((line.start.y - line.end.y) / (line.start.x - line.end.x)) * line.start.x)) \
+            #      - (self.start.y - (((self.start.y - self.end.y) / (self.start.x - self.end.x)) * self.start.x))) \
+            #      / (((self.start.y - self.end.y) / (self.start.x - self.end.x)) - (
+            #            (line.start.y - line.end.y) / (line.start.x - line.end.x)))
+
         except (ZeroDivisionError, TypeError) as e:
             print("Exception in GetLineIntercept : %s", e)
             return None
 
-        if self.inDomain(xi) and line.inDomain(xi):
+        if self.inDomain(xi) and line.inDomain(xi):  # indomain : min(self.start.x, self.end.x) < x < max(self.start.x, self.end.x)
             yi = (m1 * xi) + b1
             return Vector(xi, yi)
         else:
