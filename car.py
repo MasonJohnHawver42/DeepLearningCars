@@ -80,10 +80,10 @@ class AutoBrain:
         self.auto = auto
         self.num_input = 9
         self.input = []
-        self.dense1 = Dense(self.num_input, 9, relu)  # testing logistic map
-        self.dense2 = Dense(9, 4, lrelu)
+        self.dense1 = Dense(self.num_input, 18, relu)
+        self.dense2 = Dense(18, 9, lrelu)
         # self.dense3 = Dense(9, 4, relu)
-        self.out = Dense(4, 2, tanh)
+        self.out = Dense(9, 2, tanh)
         self.randomize(self.auto.world.learning_rate)
         self.history = []
 
@@ -123,6 +123,8 @@ class AutoBrain:
         self.out.bias += parent.out.bias * amt
 
     def draw(self, bounding_rect):
+        """Draw the NN and joystick"""
+        #return None
         # layers = [self.dense1, self.dense2, self.dense3, self.out]
         layers = [self.dense1, self.dense2, self.out]
         width = bounding_rect.size.x / (len(layers) + 1)
@@ -148,6 +150,9 @@ class AutoBrain:
         self.auto.world.viewer.draw([Line((-70, 50), (-70, 50 - self.input[7]), (0, 0, 200), 10)])
         # KERU add lat vel
         self.auto.world.viewer.draw([Line((-62, 70), (-60 + self.input[8], 70), (200, 200, 0), 10)])
+
+        # KERU DRAW NN
+        # return None
 
         for _input in self.input:
             activation = max(min((_input / 100), 1), 0)
@@ -187,8 +192,8 @@ class AutoBrain:
 
                     units.append(unit)
 
-                self.auto.world.viewer.draw(conns)
-                self.auto.world.viewer.draw(last_layer)
+                self.auto.world.viewer.draw(conns)         #KERU draw NN
+                self.auto.world.viewer.draw(last_layer)    #KERU drraw NN
                 last_layer = units
 
         self.auto.world.viewer.draw(last_layer)

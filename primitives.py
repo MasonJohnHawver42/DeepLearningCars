@@ -31,14 +31,14 @@ class Line:
 
     # TODO: optimize this ! (also know as : the absurd cost of function call)
     def getLineIntercept(self, line):
-        m1 = self.getSlope()        # (self.start.y - self.end.y) / (self.start.x - self.end.x)
-        b1 = self.getIntercept()    # self.start.y - (((self.start.y - self.end.y) / (self.start.x - self.end.x)) * self.start.x)
-        m2 = line.getSlope()
-        b2 = line.getIntercept()
-        #m1 = (self.start.y - self.end.y) / (self.start.x - self.end.x)
-        #b1 = self.start.y - (((self.start.y - self.end.y) / (self.start.x - self.end.x)) * self.start.x)
-        #m2 = (line.start.y - line.end.y) / (line.start.x - line.end.x)
-        #b2 = line.start.y - (((line.start.y - line.end.y) / (line.start.x - line.end.x)) * line.start.x)
+        #m1 = self.getSlope()        # (self.start.y - self.end.y) / (self.start.x - self.end.x)
+        #b1 = self.getIntercept()    # self.start.y - (((self.start.y - self.end.y) / (self.start.x - self.end.x)) * self.start.x)
+        #m2 = line.getSlope()
+        #b2 = line.getIntercept()
+        m1 = (self.start.y - self.end.y) / (self.start.x - self.end.x)
+        b1 = self.start.y - (((self.start.y - self.end.y) / (self.start.x - self.end.x)) * self.start.x)
+        m2 = (line.start.y - line.end.y) / (line.start.x - line.end.x)
+        b2 = line.start.y - (((line.start.y - line.end.y) / (line.start.x - line.end.x)) * line.start.x)
 
         try:
              xi = (b2 - b1) / (m1 - m2)
