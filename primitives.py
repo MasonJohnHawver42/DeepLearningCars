@@ -186,6 +186,7 @@ class Poly:
             point.rotate(a)
 
     def shift(self, shift):
+        """sub self by 'shift'"""
         self.pos.sub(shift)
 
     def scale(self, scale):

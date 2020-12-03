@@ -37,8 +37,8 @@ class AutoSimulation:
         self.addNewAutos(num_car)
 
     def generateTrack(self, difficulty):
-        size = randint(int(800 - (400 * difficulty)), 800)
-        width = size / 4
+        size = 700  # make it fixed size, previous code was : #randint(int(800 - (400 * difficulty)), 800)
+        width = size // 5   # original is 4
         self.track.generateTrack(Rect((size, size), (-size / 2.0, -size / 2.0)), width)
 
     def addNewAutos(self, n):
@@ -75,8 +75,8 @@ class AutoSimulation:
         self.top_auto = top_auto
 
     def start(self):
-        d = 1.0 - (1.0 / ((self.generation / 10.0) + 1.0))
-        self.generateTrack(d)
+        difficulty = 1.0 - (1.0 / ((self.generation / 100.0) + 1.0))
+        self.generateTrack(difficulty)
         self.text = Text("Generation : " + str(self.generation))
         self.start_time = pygame.time.get_ticks()
         for car in self.autos:
@@ -102,10 +102,11 @@ class AutoSimulation:
             self.reset()
 
     def cont(self):
-        stopped = 0
-        for car in self.autos:
+        """count stopped car and decide to continue the race"""
+        stopped = 1 # was 0, but 1 is a dumb hack to stop the race if only 1 is running
+        for car in self.autos:  # count stopped car
             stopped += car.stop
-        all_stopped = stopped == (len(self.autos))
+        all_stopped = (stopped == (len(self.autos)))
         return 1 - all_stopped
 
     def end(self):

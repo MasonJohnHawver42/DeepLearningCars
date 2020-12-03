@@ -1,4 +1,4 @@
-from random import randint
+from random import randint, choice
 
 import numpy as np
 from scipy.spatial import ConvexHull
@@ -7,11 +7,12 @@ from primitives import *
 
 
 class Track:
-    def __init__(self, so=(0, 0), si=(0, 0), eo=(0, 0), ei=(0, 0), nt=None) -> None:
-        self.track_outer = Line(so, eo)
-        self.track_inner = Line(si, ei)
-        self.gate = Line(so, si)
-        self.next_track = nt
+    def __init__(self, start_outer=(0, 0), start_inner=(0, 0),
+                 end_outer=(0, 0), end_inner=(0, 0), next_track=None) -> None:
+        self.track_outer = Line(start_outer, end_outer)
+        self.track_inner = Line(start_inner, end_inner)
+        self.gate = Line(start_outer, start_inner)
+        self.next_track = next_track
         self.color = (0, 0, 0)
 
     def activate(self) -> None:
@@ -26,7 +27,6 @@ class Track:
         center = Vector()
         for point in [self.track_outer.start, self.track_outer.end, self.track_inner.start, self.track_inner.end]:
             center.add(point)
-
         center.div((4, 4))
         return center
 
@@ -35,10 +35,10 @@ class RaceTrack:
     def __init__(self, world):
         self.tracks = []
         self.world = world
-
-        self.dir = (randint(0, 1) * 2) - 1
+        self.dir = choice([-1,1])    # (randint(0, 1) * 2) - 1
 
     def generateTrack(self, bounding_rect, width) -> None:
+        '''width is the desired width of the track'''
         self.tracks = []
 
         track_outer = Poly()
@@ -49,37 +49,35 @@ class RaceTrack:
 
         points = np.random.rand(randint(20, 30), 2)
         hull = ConvexHull(points)
-        self.dir = (randint(0, 1) * 2) - 1
-        verts = hull.vertices  # [::self.dir]
+        self.dir = choice([-1,1])   # (randint(0, 1) * 2) - 1
+        verts = hull.vertices  # vertices is the list of the index of the point making the convex hull
 
         for vert in verts:
-            point = points[vert]
-            point -= [.5, .5]
-            point = (point * [bounding_rect.size.x, bounding_rect.size.y])
-            point = Vector(point[0], point[1])
-            d = 100
+            distance = 100     # distance ?
+            point = points[vert]    # the (x,y) coordinate of the convex hull point
+            point -= [.5, .5]       # the hull is in [0, 1], make it [-0.5,0.5] so [0,0] is ~ the center
+
+            point = (point * [bounding_rect.size.x, bounding_rect.size.y])  # multiply into pixel coordinate
+            point = Vector(point[0], point[1])  #make a vector from it
+
             for p in track_outer.points:
-                d = Vector()
-                d.set(point)
-                d.sub(p)
-                d = d.getMag()
-                if d < 80:  # was 80
+                distance = Vector()
+                distance.set(point)
+                distance.sub(p)
+                distance = distance.getMag()
+                if distance < 80:
                     break
-            if d > 80:
+
+            if distance > 80:
                 track_outer.points.append(point)
                 track_inner.points.append(Vector(point[0], point[1]))
 
         track_outer.pos = bounding_rect.getCenter()
         track_inner.pos = bounding_rect.getCenter()
 
-        # boundingRect = self.track_outer.getBoundingRect()
-
-        # scale = Vector(width, width)
-        # scale.sub(boundingRect.size)
-        # scale.div(boundingRect.size)
-        # scale.mult((-1, -1))
-
         scale = -1 * ((width / min(bounding_rect.size.x, bounding_rect.size.y)) - 1)
+        # scale is the mmultiplier to make the innertrack
+        # TODO : it would be nice to have a minimum track width defined somewhere
 
         track_inner.shift(bounding_rect.pos)
         track_inner.scale((scale, scale))
@@ -113,8 +111,9 @@ class RaceTrack:
         self.tracks[len(self.tracks) - 1].next_track = self.tracks[0]
 
     def draw(self) -> None:
+        """draw the track : outer + inner + circles"""
         circles = []
-        lines = []  # [Line(self.points[0], self.points[-1])]
+        lines = []
 
         for track in self.tracks:
             lines.append(track.track_outer)
