@@ -47,7 +47,7 @@ class RaceTrack:
         track_outer.points = []
         track_inner.points = []
 
-        points = np.random.rand(randint(20, 30), 2)
+        points = np.random.rand(randint(30, 80), 2) # the more point, the more it will be a square
         hull = ConvexHull(points)
         self.dir = choice([-1,1])   # (randint(0, 1) * 2) - 1
         verts = hull.vertices  # vertices is the list of the index of the point making the convex hull
@@ -60,6 +60,16 @@ class RaceTrack:
             point = (point * [bounding_rect.size.x, bounding_rect.size.y])  # multiply into pixel coordinate
             point = Vector(point[0], point[1])  #make a vector from it
 
+            # try to push closest point away from the center
+            while point.getMag() < 300:
+                point.mult(Vector(1.1,1.1))
+
+            #while point.getMag() > 400:
+            #    point.div(Vector(1.1,1.1))
+
+
+            #print(point.getMag())
+
             for p in track_outer.points:
                 distance = Vector()
                 distance.set(point)
@@ -68,7 +78,7 @@ class RaceTrack:
                 if distance < 80:
                     break
 
-            if distance > 80:
+            if distance >= 80:
                 track_outer.points.append(point)
                 track_inner.points.append(Vector(point[0], point[1]))
 

@@ -121,6 +121,10 @@ class AutoBrain:
         # self.dense3.bias += parent.dense3.bias
         self.out.weights += parent.out.weights
         self.out.bias += parent.out.bias * amt
+        for i in range(len(parent.auto.angles)):
+            parent.auto.angles[i] += random.choice([amt * -10 ,0, amt * 10])
+        #print(parent.auto.angles)   #KERU
+
 
     def draw(self, bounding_rect):
         """Draw the NN and joystick"""
@@ -423,6 +427,14 @@ class Auto(RaceCar):
         self.start_time = pygame.time.get_ticks()
         self.current_track = 0
         self.top = 0
+        if not parent:
+            self.angles = []
+            for _ in range(7):
+                self.angles.append(random.randint(-90,90))
+        else:
+            self.angles = parent.angles
+        #self.angles = [] #[-90, -45, -20, 0, 20, 45, 90]
+
         self.brain = AutoBrain(self)
         self.engine_amt = 0  # 0 - 1
         self.break_amt = 0  # 0 - 1
@@ -458,7 +470,7 @@ class Auto(RaceCar):
 
     def getInputs(self) -> []:
         max_dis = 2000
-        angles = [-90, -45, -20, 0, 20, 45, 90]
+        angles = self.angles
         # for i, a in enumerate(angles):  # KERU add some noise
         #    a += random.random() * 2 - 0.5
         #    angles[i] = a

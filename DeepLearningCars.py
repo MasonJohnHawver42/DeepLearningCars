@@ -1,5 +1,5 @@
 import timeit
-from random import randint
+from random import randint, choice
 
 from pygame.locals import *
 
@@ -38,7 +38,7 @@ class AutoSimulation:
 
     def generateTrack(self, difficulty):
         size = 700  # make it fixed size, previous code was : #randint(int(800 - (400 * difficulty)), 800)
-        width = size // 5   # original is 4
+        width = size // 4   # original is 4
         self.track.generateTrack(Rect((size, size), (-size / 2.0, -size / 2.0)), width)
 
     def addNewAutos(self, n):
@@ -103,7 +103,7 @@ class AutoSimulation:
 
     def cont(self):
         """count stopped car and decide to continue the race"""
-        stopped = 1 # was 0, but 1 is a dumb hack to stop the race if only 1 is running
+        stopped = 0 # was 0, but 1 is a dumb hack to stop the race if only 1 is running
         for car in self.autos:  # count stopped car
             stopped += car.stop
         all_stopped = (stopped == (len(self.autos)))
@@ -119,18 +119,30 @@ class AutoSimulation:
             self.learning_rate = LEARNING_RATE_MIN
         print("Learning rate : %.4f" % self.learning_rate)
 
-        # count car that are still running and send them for the next run as-is
+        #add the top auto to next run
+        new_batch.append(self.top_auto)
+
+        # count car that are still running and send them for the next run
         running_car_count = 0
         for running_auto in self.autos:
-            if running_auto.stop == 0 and running_car_count < num_car:
+            if running_auto.stop == 0 and running_car_count < num_car // 2:
                 running_car_count += 1
-                # make slightly less mutated child
-                new_batch.append(running_auto.makeChild(self.learning_rate / 10))
+                ## make slightly less mutated child
+                new_batch.append(running_auto.makeChild(self.learning_rate))
+
         print("running cars : ", running_car_count)
 
-        # complete the list with mutated child of the top auto
+        #complete the list up to 50% with mutated top car
+        new_top_car = 0
+        while running_car_count < (num_car // 2):
+            running_car_count += 1
+            new_top_car += 1
+            new_batch.append(self.top_auto.makeChild(self.learning_rate))
+
+        # complete the other 50% with the list with mutated version of random car of this run
         for i in range(len(self.autos) - running_car_count):
-            auto = self.top_auto.makeChild()
+            #auto = self.top_auto.makeChild()
+            auto = choice(self.autos).makeChild(self.learning_rate)
             new_batch.append(auto)
 
         # finally, copy the new batch + the top auto (without mutating it) to the next batch
