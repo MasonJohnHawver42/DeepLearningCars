@@ -4,7 +4,7 @@ import numpy as np
 from scipy.spatial import ConvexHull
 
 from primitives import *
-
+import copy
 
 class Track:
     def __init__(self, start_outer=(0, 0), start_inner=(0, 0),
@@ -36,6 +36,7 @@ class RaceTrack:
         self.tracks = []
         self.world = world
         self.dir = choice([-1,1])    # (randint(0, 1) * 2) - 1
+        self.points = np.random.rand(randint(30, 80), 2) # the more point, the more it will be a square
 
     def generateTrack(self, bounding_rect, width) -> None:
         '''width is the desired width of the track'''
@@ -47,7 +48,10 @@ class RaceTrack:
         track_outer.points = []
         track_inner.points = []
 
-        points = np.random.rand(randint(30, 80), 2) # the more point, the more it will be a square
+        #dumb hack to generate only 1 track
+        points = copy.copy(self.points)
+        # the usual way below
+        # points = np.random.rand(randint(30, 80), 2) # the more point, the more it will be a square
         hull = ConvexHull(points)
         self.dir = choice([-1,1])   # (randint(0, 1) * 2) - 1
         verts = hull.vertices  # vertices is the list of the index of the point making the convex hull

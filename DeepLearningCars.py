@@ -11,7 +11,7 @@ from viewer import TargetViewer
 
 
 reset_timer = 30000  # reset the track after n ms
-num_car = 150  # how many car to spawn
+num_car = 50  # how many car to spawn
 LEARNING_RATE = 0.1
 LEARNING_RATE_DEC = 0.001
 LEARNING_RATE_MIN = 0.05
@@ -86,7 +86,7 @@ class AutoSimulation:
         for car in self.autos:
             if not car.stop:  # only update unstopped car
                 car.update()
-                if (not self.slow_car_removed) and ((pygame.time.get_ticks() - self.start_time) > 5000):
+                if (not self.slow_car_removed) and ((pygame.time.get_ticks() - self.start_time) > 10000):
                     """remove slow car after N ms"""
                     if car.vel.getMag() < 10:
                         car.stop = 1
@@ -122,6 +122,14 @@ class AutoSimulation:
         #add the top auto to next run
         new_batch.append(self.top_auto)
 
+        # count running car, for display
+        running_car_count = 0
+        for running_auto in self.autos:
+            if running_auto.stop == 0:
+                running_car_count += 1
+        print("running cars : ", running_car_count)
+
+
         # count car that are still running and send them for the next run
         running_car_count = 0
         for running_auto in self.autos:
@@ -130,8 +138,6 @@ class AutoSimulation:
                 ## make slightly less mutated child
                 new_batch.append(running_auto.makeChild(self.learning_rate))
 
-        print("running cars : ", running_car_count)
-
         #complete the list up to 50% with mutated top car
         new_top_car = 0
         while running_car_count < (num_car // 2):
@@ -139,8 +145,9 @@ class AutoSimulation:
             new_top_car += 1
             new_batch.append(self.top_auto.makeChild(self.learning_rate))
 
-        # complete the other 50% with the list with mutated version of random car of this run
-        for i in range(len(self.autos) - running_car_count):
+        # complete the remaining with the list with mutated version of random car of this run
+        # leave one for top car
+        for i in range(len(self.autos) - running_car_count - 1):
             #auto = self.top_auto.makeChild()
             auto = choice(self.autos).makeChild(self.learning_rate)
             new_batch.append(auto)

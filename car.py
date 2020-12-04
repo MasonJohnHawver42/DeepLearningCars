@@ -51,7 +51,7 @@ class Dense:
         #        output += self.bias
         #        output = [sum(output[:, i]) for i in range(len(self.weights[0]))]
         #        output = [self.activation(val) for val in output]
-        output = np.sum(_input[:, None] * self.weights + self.bias, axis=0)
+        output = np.sum(_input[:, None] * self.weights + self.bias, axis=0)    # it works
         output = np.fromiter((self.activation(val) for val in output), dtype=np.single)
         self.output = output
         return output
@@ -122,13 +122,13 @@ class AutoBrain:
         self.out.weights += parent.out.weights
         self.out.bias += parent.out.bias * amt
         for i in range(len(parent.auto.angles)):
-            parent.auto.angles[i] += random.choice([amt * -10 ,0, amt * 10])
-        #print(parent.auto.angles)   #KERU
-
+            #old = (parent.auto.angles[i])   #KERU
+            parent.auto.angles[i] += random.choice([-amt, 0, amt])
+            #print("diff ", old - parent.auto.angles[i])   #KERU
 
     def draw(self, bounding_rect):
         """Draw the NN and joystick"""
-        #return None
+        # return None
         # layers = [self.dense1, self.dense2, self.dense3, self.out]
         layers = [self.dense1, self.dense2, self.out]
         width = bounding_rect.size.x / (len(layers) + 1)
@@ -196,8 +196,8 @@ class AutoBrain:
 
                     units.append(unit)
 
-                self.auto.world.viewer.draw(conns)         #KERU draw NN
-                self.auto.world.viewer.draw(last_layer)    #KERU drraw NN
+                self.auto.world.viewer.draw(conns)  # KERU draw NN
+                self.auto.world.viewer.draw(last_layer)  # KERU drraw NN
                 last_layer = units
 
         self.auto.world.viewer.draw(last_layer)
@@ -357,6 +357,7 @@ class Car(PhysicsEntity):
         self.world.viewer.draw([self.body, line])
 
 
+
 class RaceCar(Car):
     def __init__(self, world):
         Car.__init__(self, world)
@@ -375,6 +376,7 @@ class RaceCar(Car):
         self.world.viewer.draw([Circle(5, orientation)])
         orientation.sub(self.pos)
 
+        # TODO : find a bug here
         for i in range(100):
             direction = self.body.getMidPoint()
             a = orientation.getAngleDiff(direction)
@@ -428,12 +430,12 @@ class Auto(RaceCar):
         self.current_track = 0
         self.top = 0
         if not parent:
-            self.angles = []
-            for _ in range(7):
-                self.angles.append(random.randint(-90,90))
+            self.angles = [-90, -45, -20, 0, 20, 45, 90]
+            #for _ in range(7):
+            #    self.angles.append(random.randint(-90, 90))
         else:
             self.angles = parent.angles
-        #self.angles = [] #[-90, -45, -20, 0, 20, 45, 90]
+        # self.angles = [] #[-90, -45, -20, 0, 20, 45, 90]
 
         self.brain = AutoBrain(self)
         self.engine_amt = 0  # 0 - 1
@@ -445,6 +447,7 @@ class Auto(RaceCar):
         self.parent = parent
         self.id = Auto.next_id
         Auto.next_id += 1
+
 
     def getName(self):
         return "Auto_{}".format(self.id) if self.parent is None else "{}_{}".format(self.parent.name, self.id)
@@ -469,7 +472,7 @@ class Auto(RaceCar):
         self.fitness += 1
 
     def getInputs(self) -> []:
-        max_dis = 2000
+        max_dis = 200  # KERU
         angles = self.angles
         # for i, a in enumerate(angles):  # KERU add some noise
         #    a += random.random() * 2 - 0.5
@@ -489,8 +492,8 @@ class Auto(RaceCar):
             col = None
             i = 0
 
+            cols = []  # TODO : not sure if here or below
             while i < len(self.world.track.tracks) and col is None:
-                cols = []
                 min_dis = None
                 col = None
                 index = math.ceil(i / 2.0) * (((i % 2) * 2) - 1)

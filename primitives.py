@@ -29,7 +29,7 @@ class Line:
     def inDomain(self, x):
         return min(self.start.x, self.end.x) < x < max(self.start.x, self.end.x)
 
-    # TODO: optimize this ! (also know as : the absurd cost of function call)
+    # TODO: optimize this !
     def getLineIntercept(self, line):
         #m1 = self.getSlope()        # (self.start.y - self.end.y) / (self.start.x - self.end.x)
         #b1 = self.getIntercept()    # self.start.y - (((self.start.y - self.end.y) / (self.start.x - self.end.x)) * self.start.x)
