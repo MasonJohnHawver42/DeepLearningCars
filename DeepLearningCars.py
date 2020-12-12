@@ -15,6 +15,7 @@ pygame.init()
 
 reset_timer = 30000  # reset the track after n ms
 num_car = 200  # how many car to spawn
+SCALED = 1
 
 
 # The math, game engine, neural net code, and genetic algorithms are all encapsulated here!
