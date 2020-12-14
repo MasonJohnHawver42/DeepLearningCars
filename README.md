@@ -1,5 +1,6 @@
 # DeepLearningCars
 Using deep genetic learning cars are able race around a randomly generated track.
+video - https://www.youtube.com/watch?v=rklWAOirpQ4
 
 # Genetic Learnig
 Genetic learning is an algorithim used to generate to most fit entity. 
